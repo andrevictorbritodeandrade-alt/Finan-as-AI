@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import SummaryCard from './components/SummaryCard';
@@ -24,6 +24,10 @@ const App: React.FC = () => {
 
     // Added state for pre-filling AI message
     const [aiInitialMessage, setAiInitialMessage] = useState<string>('');
+
+    // Ref for accessing latest data in closures/listeners (Critical for robust syncing)
+    const monthDataRef = useRef<MonthData | null>(null);
+    useEffect(() => { monthDataRef.current = monthData; }, [monthData]);
 
     // Load Initial Data
     useEffect(() => {
@@ -93,6 +97,12 @@ const App: React.FC = () => {
                 if (!localStr || cloudData.updatedAt > JSON.parse(localStr).updatedAt) {
                     setMonthData(cloudData);
                     localStorage.setItem(localKey, JSON.stringify(cloudData));
+                }
+            } else {
+                // Cloud document doesn't exist. 
+                // If we have local data (e.g. generated template), upload it now that we are online.
+                if (monthDataRef.current) {
+                    setDoc(docRef, monthDataRef.current).catch(e => console.error("Initial upload failed", e));
                 }
             }
         });
@@ -213,7 +223,7 @@ const App: React.FC = () => {
         };
     }, [monthData]);
 
-    // Financial Projections Logic (Simplified for brevity)
+    // Financial Projections Logic
     const projections: FinancialProjection[] = useMemo(() => {
         if(!monthData) return [];
         return [{
@@ -227,6 +237,22 @@ const App: React.FC = () => {
             details: monthData.expenses.filter(e => !e.isDistribution).map(e => `${e.description}: ${e.amount}`)
         }];
     }, [monthData, stats, currentYear]);
+
+    // Calculate Accounts for Sidebar dynamically
+    const sidebarAccounts = useMemo(() => {
+        return [
+            { 
+                id: 'acc_main', 
+                name: 'Conta Principal', 
+                balance: stats.salary.total // Junção dos Salários
+            },
+            { 
+                id: 'acc_mum', 
+                name: 'Mumbuca', 
+                balance: stats.mumbuca.total * 0.92 // Junção dos Mumbucas com 8% de desconto
+            }
+        ];
+    }, [stats]);
 
     // Group Personal Debts
     const groupedDebts = useMemo(() => {
@@ -274,8 +300,10 @@ const App: React.FC = () => {
         return 'from-gray-500 to-gray-700';
     };
 
-    // Correct Balance: Income Paid - Real Expenses Paid (Ignoring distribution items)
-    const balance = stats.salary.paid - stats.realExpenses.paid;
+    // Balance for Header: Using PROJECTED SURPLUS (Total Income - Total Expenses) 
+    // This avoids negative balance confusion when income hasn't been ticked as paid yet.
+    // Logic: Combined Income (Salary + Mumbuca Net) - Real Expenses (Excluding Distribution)
+    const balance = stats.surplusRaw;
 
     if (!monthData) return <div className="flex items-center justify-center h-screen bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div></div>;
 
@@ -306,7 +334,7 @@ const App: React.FC = () => {
             <Sidebar 
                 isOpen={sidebarOpen} 
                 onClose={() => setSidebarOpen(false)} 
-                accounts={monthData.bankAccounts}
+                accounts={sidebarAccounts} // Pass dynamically calculated accounts
                 syncStatus={syncStatus}
                 onSync={() => saveData(monthData, currentYear, currentMonth)}
                 currentView={view}
