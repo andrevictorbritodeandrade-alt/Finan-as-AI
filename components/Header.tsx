@@ -21,61 +21,59 @@ const Header: React.FC<HeaderProps> = ({
     
     const isPositive = balance >= 0;
     
-    // Dynamic styles based on balance
-    const balanceColor = isPositive ? 'text-emerald-600' : 'text-rose-600';
-    const monthColor = isPositive ? 'text-teal-900' : 'text-rose-900';
-    const monthBg = isPositive ? 'bg-teal-50 text-teal-700' : 'bg-rose-50 text-rose-700';
-    const navBtnHover = isPositive ? 'hover:text-teal-600' : 'hover:text-rose-600';
+    // Modern gradients for balance
+    const balanceGradient = isPositive 
+        ? 'bg-gradient-to-r from-emerald-700 to-teal-600' 
+        : 'bg-gradient-to-r from-rose-700 to-pink-600';
 
     return (
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 pb-4 pt-2 shadow-[0_4px_20px_-12px_rgba(0,0,0,0.1)] rounded-b-3xl transition-colors duration-500">
-            {/* Top Row: Navigation & Actions */}
-            <div className="flex justify-between items-center px-4 mb-2">
-                <button onClick={onToggleSidebar} className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
-                    <Menu size={24} strokeWidth={2.5} />
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-white/20 pb-4 pt-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-b-[2rem]">
+            {/* Top Row */}
+            <div className="flex justify-between items-center px-5 mb-4">
+                <button onClick={onToggleSidebar} className="p-2.5 rounded-xl bg-white shadow-sm hover:shadow-md text-slate-800 transition-all active:scale-95">
+                    <Menu size={22} strokeWidth={3} />
                 </button>
 
-                <div className={`flex items-center gap-3 px-2 py-1 rounded-full transition-colors duration-300 ${isPositive ? 'bg-gray-100/80' : 'bg-rose-50/50'}`}>
-                    <button onClick={() => onMonthChange(-1)} className={`p-1.5 rounded-full hover:bg-white text-gray-500 hover:shadow-sm transition-all ${navBtnHover}`}>
-                        <ChevronLeft size={20} strokeWidth={3} />
+                <div className="flex items-center gap-1 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50 backdrop-blur-sm">
+                    <button onClick={() => onMonthChange(-1)} className="p-2 rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 hover:shadow-sm transition-all">
+                        <ChevronLeft size={18} strokeWidth={3} />
                     </button>
-                    <span className={`text-base font-extrabold w-28 text-center select-none transition-colors duration-300 ${monthColor}`}>
-                        {monthNames[month - 1].slice(0, 3)} <span className="opacity-60">{year}</span>
+                    <span className="text-sm font-black w-28 text-center text-slate-800 uppercase tracking-widest">
+                        {monthNames[month - 1].slice(0, 3)} <span className="text-slate-400">{year}</span>
                     </span>
-                    <button onClick={() => onMonthChange(1)} className={`p-1.5 rounded-full hover:bg-white text-gray-500 hover:shadow-sm transition-all ${navBtnHover}`}>
-                        <ChevronRight size={20} strokeWidth={3} />
+                    <button onClick={() => onMonthChange(1)} className="p-2 rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 hover:shadow-sm transition-all">
+                        <ChevronRight size={18} strokeWidth={3} />
                     </button>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                     <button 
                         onClick={onSync}
-                        className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
-                            syncStatus === 'online' ? 'text-emerald-500' :
-                            syncStatus === 'syncing' ? 'text-blue-500 animate-spin' : 'text-gray-400'
+                        className={`p-2.5 rounded-xl transition-all ${
+                            syncStatus === 'online' ? 'bg-emerald-50 text-emerald-600' :
+                            syncStatus === 'syncing' ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-500'
                         }`}
                     >
-                        <RefreshCw size={22} strokeWidth={2.5} />
+                        <RefreshCw size={20} strokeWidth={3} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
                     </button>
-                    <button onClick={onOpenAi} className="p-2 rounded-full bg-gradient-to-tr from-teal-50 to-emerald-50 text-teal-600 border border-teal-100 hover:shadow-md transition-all">
-                        <Sparkles size={22} strokeWidth={2.5} />
+                    <button onClick={onOpenAi} className="p-2.5 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:scale-105 transition-all">
+                        <Sparkles size={20} strokeWidth={3} />
                     </button>
                 </div>
             </div>
 
             {/* Hero: Balance */}
-            <div className="flex flex-col items-center justify-center mt-3">
-                <span className={`text-sm font-bold tracking-wide uppercase transition-colors ${isPositive ? 'text-gray-400' : 'text-rose-400'}`}>
-                    Saldo Disponível
-                </span>
-                <div className="flex items-center gap-3 mt-1">
-                    <span className={`text-5xl font-black tracking-tighter transition-colors duration-500 ${!showBalance && 'blur-md select-none'} ${balanceColor}`}>
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balance)}
-                    </span>
-                    <button onClick={() => setShowBalance(!showBalance)} className={`transition-colors ${isPositive ? 'text-gray-300 hover:text-emerald-500' : 'text-rose-200 hover:text-rose-500'}`}>
-                        {showBalance ? <EyeOff size={20} strokeWidth={2.5} /> : <Eye size={20} strokeWidth={2.5} />}
+            <div className="flex flex-col items-center justify-center mt-2 px-6">
+                <div className="flex items-center gap-2 mb-1 opacity-70">
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Saldo Disponível</span>
+                     <button onClick={() => setShowBalance(!showBalance)} className="text-slate-500 hover:text-slate-700 transition-colors">
+                        {showBalance ? <EyeOff size={14} strokeWidth={3} /> : <Eye size={14} strokeWidth={3} />}
                     </button>
                 </div>
+                
+                <span className={`text-4xl sm:text-5xl font-black tracking-tight text-transparent bg-clip-text ${balanceGradient} drop-shadow-sm ${!showBalance && 'blur-md select-none opacity-50'}`}>
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balance)}
+                </span>
             </div>
         </header>
     );
