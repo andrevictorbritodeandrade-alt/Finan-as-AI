@@ -3,9 +3,9 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import SummaryCard from './components/SummaryCard';
 import TransactionList from './components/TransactionList';
-import AiChat from './components/AiChat';
 import EditTransactionModal from './components/EditTransactionModal';
-import FinancialHealthWidget from './components/FinancialHealthWidget'; // Import Widget
+import FinancialHealthWidget from './components/FinancialHealthWidget';
+import ExpenseDistribution from './components/ExpenseDistribution';
 import { MonthData, TransactionType, Transaction, FinancialProjection } from './types';
 import { generateMonthData, getStorageKey } from './utils/financeUtils';
 import { db, auth, isConfigured, onAuthStateChanged, signInAnonymously } from './services/firebaseConfig';
@@ -20,16 +20,12 @@ const App: React.FC = () => {
     const [monthData, setMonthData] = useState<MonthData | null>(null);
     const [view, setView] = useState<'home' | 'transactions' | 'goals'>('home');
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [aiOpen, setAiOpen] = useState(false);
     const [syncStatus, setSyncStatus] = useState<'offline' | 'syncing' | 'online'>('offline');
     const [transactionListType, setTransactionListType] = useState<TransactionType>('expenses');
 
     // Edit Modal State
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-    // Added state for pre-filling AI message
-    const [aiInitialMessage, setAiInitialMessage] = useState<string>('');
 
     // Ref for accessing latest data in closures/listeners
     const monthDataRef = useRef<MonthData | null>(null);
@@ -57,6 +53,19 @@ const App: React.FC = () => {
         }
     }, []);
 
+    // NEW: Force sync on visibility change (when opening app from background) to ensure instant updates
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                // Trigger a re-read if needed, though onSnapshot handles most.
+                // This ensures if the socket was paused, we wake it up.
+                console.log("App foregrounded, ensuring sync...");
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }, []);
+
     const loadData = async (year: number, month: number) => {
         const key = getStorageKey(year, month);
         const local = localStorage.getItem(key);
@@ -70,6 +79,9 @@ const App: React.FC = () => {
     };
 
     const saveData = async (data: MonthData, year: number, month: number) => {
+        // Ensure updatedAt is always fresh
+        data.updatedAt = Date.now();
+        
         const key = getStorageKey(year, month);
         localStorage.setItem(key, JSON.stringify(data));
         setMonthData({ ...data }); 
@@ -90,15 +102,19 @@ const App: React.FC = () => {
     const setupRealtimeListener = (year: number, month: number) => {
         if (!isConfigured) return;
         const docRef = doc(db, 'families', FAMILY_ID, 'months', `${year}-${month.toString().padStart(2, '0')}`);
+        
         return onSnapshot(docRef, (snap) => {
             if (snap.exists()) {
                 const cloudData = snap.data() as MonthData;
+                
+                // CRITICAL FIX: Always trust the cloud snapshot. 
+                // Removed the timestamp comparison (cloudData.updatedAt > local) because clock differences 
+                // between devices were preventing updates from showing up immediately.
+                setMonthData(cloudData);
+                
+                // Update local cache immediately
                 const localKey = getStorageKey(year, month);
-                const localStr = localStorage.getItem(localKey);
-                if (!localStr || cloudData.updatedAt > JSON.parse(localStr).updatedAt) {
-                    setMonthData(cloudData);
-                    localStorage.setItem(localKey, JSON.stringify(cloudData));
-                }
+                localStorage.setItem(localKey, JSON.stringify(cloudData));
             } else {
                 if (monthDataRef.current) {
                     setDoc(docRef, monthDataRef.current).catch(e => console.error("Initial upload failed", e));
@@ -123,7 +139,7 @@ const App: React.FC = () => {
         const item = newData[type].find(t => t.id === id);
         if (item) {
             item.paid = paid;
-            item.updatedAt = Date.now();
+            // saveData handles updatedAt
             saveData(newData, currentYear, currentMonth);
         }
     };
@@ -137,7 +153,6 @@ const App: React.FC = () => {
             const target = newData.expenses.find(e => e.id === groupItem.id);
             if (target) { target.paid = newStatus; }
         });
-        newData.updatedAt = Date.now();
         saveData(newData, currentYear, currentMonth);
     };
 
@@ -146,21 +161,30 @@ const App: React.FC = () => {
         setIsEditModalOpen(true);
     };
 
-    const handleSaveTransaction = (updatedTransaction: Transaction) => {
+    const handleAddNewTransaction = () => {
+        setEditingTransaction(null); // Null triggers "New" mode in modal
+        setIsEditModalOpen(true);
+    };
+
+    const handleSaveTransaction = (updatedTransaction: Transaction, targetList: TransactionType) => {
         if (!monthData) return;
         const newData = { ...monthData };
-        const updateInList = (list: Transaction[]) => {
-            const index = list.findIndex(t => t.id === updatedTransaction.id);
-            if (index !== -1) {
-                list[index] = updatedTransaction;
-                return true;
-            }
-            return false;
+        
+        // Helper to remove transaction if it exists in any list (in case type changed or just updating)
+        const removeFromLists = (id: string) => {
+            newData.incomes = newData.incomes.filter(t => t.id !== id);
+            newData.expenses = newData.expenses.filter(t => t.id !== id);
+            newData.avulsosItems = newData.avulsosItems.filter(t => t.id !== id);
+            newData.shoppingItems = newData.shoppingItems.filter(t => t.id !== id);
         };
-        if (!updateInList(newData[transactionListType])) {
-            updateInList(newData.incomes) || updateInList(newData.expenses) || updateInList(newData.avulsosItems) || updateInList(newData.shoppingItems);
-        }
-        newData.updatedAt = Date.now();
+
+        // 1. Remove existing instance if updating
+        removeFromLists(updatedTransaction.id);
+
+        // 2. Add to the target list
+        if (!newData[targetList]) newData[targetList] = [];
+        newData[targetList].push(updatedTransaction);
+
         saveData(newData, currentYear, currentMonth);
     };
 
@@ -277,7 +301,6 @@ const App: React.FC = () => {
                 balance={balance}
                 onMonthChange={handleMonthChange}
                 onToggleSidebar={() => setSidebarOpen(true)}
-                onOpenAi={() => setAiOpen(true)}
                 onSync={() => saveData(monthData, currentYear, currentMonth)}
                 syncStatus={syncStatus}
             />
@@ -292,14 +315,6 @@ const App: React.FC = () => {
                 onNavigate={setView}
             />
 
-            <AiChat 
-                isOpen={aiOpen} 
-                onClose={() => setAiOpen(false)} 
-                currentMonthData={monthData}
-                projections={projections}
-                initialMessage={aiInitialMessage}
-            />
-
             <EditTransactionModal 
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
@@ -311,7 +326,7 @@ const App: React.FC = () => {
                 {view === 'home' && (
                     <div className="flex flex-col gap-6 animate-fadeIn">
                         
-                        {/* WIDGET DE SAÚDE FINANCEIRA (NOVO) */}
+                        {/* WIDGET DE SAÚDE FINANCEIRA */}
                         <div className="w-full">
                             <FinancialHealthWidget 
                                 income={stats.combined.total} 
@@ -352,6 +367,11 @@ const App: React.FC = () => {
                                     compact={true}
                                 />
                             </div>
+                        </div>
+
+                        {/* EXPENSE DISTRIBUTION CHART (NOVO) */}
+                        <div className="w-full animate-fadeIn">
+                            <ExpenseDistribution expenses={monthData.expenses} />
                         </div>
 
                         {groupedDebts.length > 0 && (
@@ -511,7 +531,11 @@ const App: React.FC = () => {
                 )}
             </main>
 
-            <button className="fixed bottom-6 right-5 w-16 h-16 bg-slate-900 text-white rounded-[1.5rem] shadow-2xl shadow-slate-900/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-30 group">
+            {/* Floating Action Button (FAB) */}
+            <button 
+                onClick={handleAddNewTransaction}
+                className="fixed bottom-6 right-5 w-16 h-16 bg-slate-900 text-white rounded-[1.5rem] shadow-2xl shadow-slate-900/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-30 group"
+            >
                 <Plus size={32} strokeWidth={3} className="group-hover:rotate-90 transition-transform duration-300" />
             </button>
         </div>

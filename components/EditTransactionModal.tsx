@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Transaction } from '../types';
-import { X, Save, Calendar, Tag, DollarSign, Type, Check, ChevronDown } from 'lucide-react';
+import { Transaction, TransactionType } from '../types';
+import { X, Save, Calendar, Tag, DollarSign, Type, Check, ChevronDown, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { 
     Banknote, CreditCard, Home, ShoppingCart, Car, Heart, GraduationCap, 
     Palmtree, TrendingDown, TrendingUp, Fuel, Gift, Coins, MoreHorizontal, FileWarning 
@@ -10,10 +10,9 @@ interface EditTransactionModalProps {
     isOpen: boolean;
     onClose: () => void;
     transaction: Transaction | null;
-    onSave: (updatedTransaction: Transaction) => void;
+    onSave: (updatedTransaction: Transaction, type: TransactionType) => void;
 }
 
-// Icon helper reused here for the selector
 const getCategoryIcon = (category: string) => {
     const props = { size: 16, strokeWidth: 3 };
     switch (category) {
@@ -42,12 +41,31 @@ const CATEGORIES = [
 
 const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onClose, transaction, onSave }) => {
     const [formData, setFormData] = useState<Transaction | null>(null);
+    const [transactionType, setTransactionType] = useState<TransactionType>('expenses');
 
     useEffect(() => {
-        if (transaction) {
-            setFormData({ ...transaction });
+        if (isOpen) {
+            if (transaction) {
+                // Editing existing
+                setFormData({ ...transaction });
+                // Infer type (simple logic, parent usually knows, but we can default to expenses if unknown or check category)
+                const isIncome = ['Salário', 'Mumbuca', 'Renda Extra', 'Doação'].includes(transaction.category);
+                setTransactionType(isIncome ? 'incomes' : 'expenses');
+            } else {
+                // Creating new
+                setFormData({
+                    id: `new_${Date.now()}`,
+                    description: '',
+                    amount: 0,
+                    category: 'Outros',
+                    paid: false,
+                    date: new Date().toISOString().split('T')[0],
+                    dueDate: new Date().toISOString().split('T')[0],
+                });
+                setTransactionType('expenses'); // Default to expense as per user request (Adding debt)
+            }
         }
-    }, [transaction]);
+    }, [isOpen, transaction]);
 
     if (!isOpen || !formData) return null;
 
@@ -58,7 +76,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (formData) {
-            onSave(formData);
+            onSave(formData, transactionType);
             onClose();
         }
     };
@@ -74,8 +92,12 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
                     <div>
-                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Detalhes</span>
-                        <h2 className="text-xl font-black text-slate-900">Editar Transação</h2>
+                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                            {transaction ? 'Editar' : 'Nova'}
+                        </span>
+                        <h2 className="text-xl font-black text-slate-900">
+                            {transaction ? 'Editar Transação' : 'Adicionar Movimentação'}
+                        </h2>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-800 transition-colors">
                         <X size={24} strokeWidth={3} />
@@ -85,6 +107,32 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5 overflow-y-auto bg-slate-50/50">
                     
+                    {/* Transaction Type Toggle */}
+                    <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                        <button
+                            type="button"
+                            onClick={() => setTransactionType('incomes')}
+                            className={`flex-1 py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all ${
+                                transactionType === 'incomes' 
+                                ? 'bg-emerald-100 text-emerald-700 shadow-sm' 
+                                : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <ArrowUpCircle size={18} strokeWidth={3} /> Receita
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTransactionType('expenses')}
+                            className={`flex-1 py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all ${
+                                transactionType === 'expenses' 
+                                ? 'bg-rose-100 text-rose-700 shadow-sm' 
+                                : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <ArrowDownCircle size={18} strokeWidth={3} /> Despesa
+                        </button>
+                    </div>
+
                     {/* Description */}
                     <div className="space-y-2">
                         <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
@@ -93,9 +141,10 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                         <input 
                             type="text" 
                             required
+                            placeholder="Ex: Supermercado, Salário..."
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-extrabold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-extrabold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm placeholder:font-normal"
                         />
                     </div>
 
@@ -109,7 +158,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                 type="number" 
                                 step="0.01"
                                 required
-                                value={formData.amount}
+                                value={formData.amount || ''}
                                 onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
                                 className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
                             />
@@ -143,6 +192,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             <select 
                                 value={formData.category}
                                 onChange={(e) => handleChange('category', e.target.value)}
+                                style={{ paddingLeft: '48px' }}
                                 className="w-full appearance-none bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-extrabold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
                             >
                                 {CATEGORIES.map(cat => (
@@ -155,8 +205,6 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-600">
                                 {getCategoryIcon(formData.category)}
                             </div>
-                            {/* Ajustar padding left para não ficar em cima do ícone */}
-                            <style jsx>{`select { padding-left: 48px !important; }`}</style>
                         </div>
                     </div>
 

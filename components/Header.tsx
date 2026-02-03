@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, RefreshCw, Sparkles } from 'lucide-react';
+import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
     month: number;
@@ -7,13 +7,12 @@ interface HeaderProps {
     balance: number;
     onMonthChange: (diff: number) => void;
     onToggleSidebar: () => void;
-    onOpenAi: () => void;
     onSync: () => void;
     syncStatus: 'offline' | 'syncing' | 'online';
 }
 
 const Header: React.FC<HeaderProps> = ({ 
-    month, year, balance, onMonthChange, onToggleSidebar, onOpenAi, onSync, syncStatus 
+    month, year, balance, onMonthChange, onToggleSidebar, onSync, syncStatus 
 }) => {
     const [showBalance, setShowBalance] = useState(true);
 
@@ -55,9 +54,6 @@ const Header: React.FC<HeaderProps> = ({
                         }`}
                     >
                         <RefreshCw size={20} strokeWidth={3} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
-                    </button>
-                    <button onClick={onOpenAi} className="p-2.5 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:scale-105 transition-all">
-                        <Sparkles size={20} strokeWidth={3} />
                     </button>
                 </div>
             </div>

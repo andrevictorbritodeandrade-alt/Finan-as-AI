@@ -17,6 +17,7 @@ export interface Transaction {
   installments?: InstallmentInfo;
   group?: string; // New field for grouping (Fixed vs Variable)
   isDistribution?: boolean; // Flag to identify surplus allocation items
+  updatedAt?: number;
 }
 
 export interface Goal {
