@@ -55,6 +55,11 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, subtitle, type,
 
     const s = getStyles();
     const percentage = progress ? Math.min(100, (progress.value / progress.max) * 100) : 0;
+    
+    // Calculations for Remaining
+    const remaining = progress ? progress.max - progress.value : 0;
+    const remainingPercentage = progress ? 100 - percentage : 0;
+
     const Icon = s.icon;
 
     return (
@@ -88,14 +93,32 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, subtitle, type,
             </div>
 
             {progress ? (
-                <div className="mt-4 relative z-10">
-                    <div className={`flex justify-between text-[10px] font-black mb-1.5 ${s.subText} uppercase tracking-wider`}>
-                        <span>Pago</span>
-                        {!compact && <span>{format(progress.max)}</span>}
+                <div className="mt-4 relative z-10 flex flex-col gap-2">
+                    {/* Progress Bar */}
+                    <div>
+                        <div className={`flex justify-between text-[10px] font-black mb-1.5 ${s.subText} uppercase tracking-wider`}>
+                            <span>Pago</span>
+                            {!compact && <span>{format(progress.max)}</span>}
+                        </div>
+                        <div className={`h-1.5 w-full ${s.barBg} rounded-full overflow-hidden`}>
+                            <div className={`h-full rounded-full transition-all duration-700 ease-out ${s.barFill} shadow-[0_0_10px_rgba(255,255,255,0.5)]`} style={{ width: `${percentage}%` }}></div>
+                        </div>
                     </div>
-                    <div className={`h-1.5 w-full ${s.barBg} rounded-full overflow-hidden`}>
-                        <div className={`h-full rounded-full transition-all duration-700 ease-out ${s.barFill} shadow-[0_0_10px_rgba(255,255,255,0.5)]`} style={{ width: `${percentage}%` }}></div>
-                    </div>
+
+                    {/* NEW: Remaining Stats */}
+                    {remaining > 0 && (
+                        <div className={`flex justify-between items-end border-t border-white/10 pt-2 mt-1`}>
+                             <span className={`text-[9px] font-black uppercase tracking-wider ${s.subText} opacity-80`}>Falta</span>
+                             <div className="text-right leading-none">
+                                <span className={`block text-xs font-black ${s.text}`}>
+                                    {format(remaining)}
+                                </span>
+                                <span className={`text-[9px] font-bold ${s.subText} opacity-80`}>
+                                    ({Math.round(remainingPercentage)}%)
+                                </span>
+                             </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="mt-4 min-h-[1rem]"></div>

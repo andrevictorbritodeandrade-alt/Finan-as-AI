@@ -135,24 +135,34 @@ const App: React.FC = () => {
 
     const handleTogglePaid = (id: string, paid: boolean, type: TransactionType) => {
         if (!monthData) return;
-        const newData = { ...monthData };
-        const item = newData[type].find(t => t.id === id);
-        if (item) {
-            item.paid = paid;
-            // saveData handles updatedAt
-            saveData(newData, currentYear, currentMonth);
-        }
+        
+        // IMMUTABLE UPDATE: Map through the array to create a new reference
+        // This ensures React and Firebase detect the change properly
+        const newData = {
+            ...monthData,
+            [type]: monthData[type].map(t => 
+                t.id === id ? { ...t, paid: paid } : t
+            )
+        };
+        
+        saveData(newData, currentYear, currentMonth);
     };
 
     const handleToggleGroupPaid = (items: Transaction[]) => {
         if (!monthData) return;
         const allPaid = items.every(i => i.paid);
         const newStatus = !allPaid;
-        const newData = { ...monthData };
-        items.forEach(groupItem => {
-            const target = newData.expenses.find(e => e.id === groupItem.id);
-            if (target) { target.paid = newStatus; }
-        });
+
+        // IMMUTABLE UPDATE for groups
+        const newData = {
+            ...monthData,
+            expenses: monthData.expenses.map(e => 
+                items.some(groupItem => groupItem.id === e.id) 
+                ? { ...e, paid: newStatus }
+                : e
+            )
+        };
+
         saveData(newData, currentYear, currentMonth);
     };
 
@@ -381,7 +391,11 @@ const App: React.FC = () => {
                                     {groupedDebts.map(group => {
                                         const colorClass = getDebtColor(group.name);
                                         const isFullyPaid = group.paidAmount >= group.total && group.total > 0;
-                                        const percentage = (group.paidAmount / (group.total || 1)) * 100;
+                                        
+                                        // Calculations for Remaining
+                                        const remaining = group.total - group.paidAmount;
+                                        const remainingPercent = group.total > 0 ? (remaining / group.total) * 100 : 0;
+                                        const percentagePaid = (group.paidAmount / (group.total || 1)) * 100;
                                         
                                         return (
                                             <div 
@@ -404,13 +418,28 @@ const App: React.FC = () => {
                                                     </span>
                                                     
                                                     <div className="mt-1 w-full bg-black/20 rounded-full h-1.5 overflow-hidden">
-                                                        <div className="h-full bg-white rounded-full transition-all duration-700 ease-out shadow-[0_0_10px_rgba(255,255,255,0.4)]" style={{ width: `${percentage}%` }}></div>
+                                                        <div className="h-full bg-white rounded-full transition-all duration-700 ease-out shadow-[0_0_10px_rgba(255,255,255,0.4)]" style={{ width: `${percentagePaid}%` }}></div>
                                                     </div>
                                                     
                                                     <div className="flex justify-between items-center opacity-80 mt-1">
                                                         <span className="text-[10px] font-black">{group.items.length} itens</span>
-                                                        <span className="text-[10px] font-black">{Math.round(percentage)}%</span>
+                                                        <span className="text-[10px] font-black">{Math.round(percentagePaid)}% Pago</span>
                                                     </div>
+
+                                                    {/* NEW: Remaining Stats */}
+                                                    {!isFullyPaid && (
+                                                        <div className="mt-2 pt-2 border-t border-white/20 flex justify-between items-center">
+                                                            <span className="text-[9px] font-extrabold uppercase tracking-wide opacity-90">Falta:</span>
+                                                            <div className="text-right leading-none">
+                                                                <span className="block text-xs font-black">
+                                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(remaining)}
+                                                                </span>
+                                                                <span className="text-[9px] font-bold opacity-80">
+                                                                    ({Math.round(remainingPercent)}%)
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
