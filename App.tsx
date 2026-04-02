@@ -29,10 +29,10 @@ const App: React.FC = () => {
 
     // Force refresh for April 2026 updates
     useEffect(() => {
-        const forceUpdateApr = localStorage.getItem('force_update_apr2026');
+        const forceUpdateApr = localStorage.getItem('force_update_apr2026_v2');
         if (!forceUpdateApr) {
             localStorage.removeItem('financeData_2026_4');
-            localStorage.setItem('force_update_apr2026', 'true');
+            localStorage.setItem('force_update_apr2026_v2', 'true');
             window.location.reload();
         }
     }, []);

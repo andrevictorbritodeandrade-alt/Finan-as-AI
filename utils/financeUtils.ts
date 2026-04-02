@@ -76,7 +76,7 @@ export const generateMonthData = (year: number, month: number): MonthData => {
     const paidInMar2026 = ["ALUGUEL", "APPAI", "FATURA DO CARTÃO DO ANDRÉ ITAÚ", "CELULAR DA MARCELLY", "LILI TORRES", "JADY"];
     
     // List of items paid in Apr 2026
-    const paidInApr2026 = ["EMPRÉSTIMO COM LILI", "EMPRÉSTIMO COM CLÁUDIO"];
+    const paidInApr2026 = ["EMPRÉSTIMO COM LILI", "EMPRÉSTIMO COM CLÁUDIO", "ALUGUEL", "LILI TORRES", "SEGURO DO CARRO"];
 
     // 1. RECURRING/FIXED EXPENSES
     const cyclicalConfig = [
@@ -231,9 +231,8 @@ export const generateMonthData = (year: number, month: number): MonthData => {
     const newAvulsosItems: Transaction[] = [];
     if (year === 2026 && month === 4) {
         newAvulsosItems.push(
-            { id: `avulso_apr_1`, description: 'Compra 1', amount: 731, paid: true, category: 'Alimentação', date: '2026-04-01', group: 'Compras Abril' },
-            { id: `avulso_apr_2`, description: 'Compra 2', amount: 242, paid: true, category: 'Alimentação', date: '2026-04-01', group: 'Compras Abril' },
-            { id: `avulso_apr_3`, description: 'Compra 3', amount: 50, paid: true, category: 'Alimentação', date: '2026-04-01', group: 'Compras Abril' }
+            { id: `avulso_apr_iago`, description: 'Compras (IAGO)', amount: 782, paid: true, category: 'Alimentação', dueDate: '2026-04-07', group: 'Compras Abril' },
+            { id: `avulso_apr_proprio`, description: 'Compras (Dinheiro Próprio)', amount: 242, paid: true, category: 'Alimentação', date: '2026-04-01', group: 'Compras Abril' }
         );
     }
 
