@@ -12,7 +12,7 @@ import { generateMonthData, getStorageKey } from './utils/financeUtils';
 import { db, auth, isConfigured, onAuthStateChanged, signInAnonymously } from './services/firebaseConfig';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { FAMILY_ID } from './constants';
-import { Target, Plus, ShoppingBag, User, Plane, Wallet, PiggyBank, Home as HomeIcon, Palmtree, Heart, Car, GraduationCap, MoreHorizontal, TrendingUp, ShoppingCart, FileWarning } from 'lucide-react';
+import { Target, Plus, ShoppingBag, User, Users, ArrowRight, Plane, Wallet, PiggyBank, Home as HomeIcon, Palmtree, Heart, Car, GraduationCap, MoreHorizontal, TrendingUp, ShoppingCart, FileWarning } from 'lucide-react';
 
 const App: React.FC = () => {
     // App State
@@ -33,10 +33,10 @@ const App: React.FC = () => {
 
     // Force refresh for April 2026 updates
     useEffect(() => {
-        const forceUpdateApr = localStorage.getItem('force_update_apr2026_v2');
+        const forceUpdateApr = localStorage.getItem('force_update_apr2026_v3');
         if (!forceUpdateApr) {
             localStorage.removeItem('financeData_2026_4');
-            localStorage.setItem('force_update_apr2026_v2', 'true');
+            localStorage.setItem('force_update_apr2026_v3', 'true');
             window.location.reload();
         }
     }, []);
@@ -206,14 +206,26 @@ const App: React.FC = () => {
         if (!monthData) return;
         const newData = { ...monthData };
         
-        // If type is provided, we know exactly where to look
-        if (type) {
-            newData[type] = newData[type].map(t => t.id === updated.id ? updated : t);
-        } else {
-            // Search in all lists
-            newData.incomes = newData.incomes.map(t => t.id === updated.id ? updated : t);
-            newData.expenses = newData.expenses.map(t => t.id === updated.id ? updated : t);
-            newData.avulsosItems = newData.avulsosItems.map(t => t.id === updated.id ? updated : t);
+        let found = false;
+        const targetType = type || transactionListType;
+
+        // Helper to check and update
+        const tryUpdate = (listName: TransactionType) => {
+            const index = newData[listName].findIndex(t => t.id === updated.id);
+            if (index !== -1) {
+                newData[listName][index] = updated;
+                return true;
+            }
+            return false;
+        };
+
+        if (tryUpdate('incomes')) found = true;
+        else if (tryUpdate('expenses')) found = true;
+        else if (tryUpdate('avulsosItems')) found = true;
+
+        if (!found) {
+            // New transaction
+            newData[targetType] = [updated, ...newData[targetType]];
         }
         
         saveData(newData, currentYear, currentMonth);
@@ -300,6 +312,9 @@ const App: React.FC = () => {
         if (name.includes('LILI')) return 'from-rose-500 to-pink-600';
         if (name.includes('MARCIA')) return 'from-indigo-500 to-blue-600';
         if (name.includes('JADY')) return 'from-amber-500 to-orange-600';
+        if (name.includes('CLAUDIO')) return 'from-emerald-500 to-teal-600';
+        if (name.includes('REBECCA')) return 'from-violet-500 to-purple-600';
+        if (name.includes('IAGO')) return 'from-sky-500 to-cyan-600';
         return 'from-slate-600 to-slate-800';
     };
 
@@ -473,6 +488,48 @@ const App: React.FC = () => {
 
                                 {activeTab === 'overview' && (
                                     <>
+                                        {/* DEBTS BY PERSON CARD */}
+                                        <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-6 lg:p-8 border border-white/60 shadow-xl shadow-slate-200/40 mb-8">
+                                            <div className="flex items-center gap-3 mb-8">
+                                                <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+                                                    <Users size={20} strokeWidth={3} />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">Dívidas a Pagar (Por Pessoa)</h3>
+                                                    <span className="text-xs font-bold text-slate-400">Valores para repassar aos familiares</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                {groupedDebts.map(group => (
+                                                    <div key={group.name} className="bg-white rounded-3xl p-5 border border-slate-50 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getDebtColor(group.name)} text-white flex items-center justify-center shrink-0 shadow-lg shadow-slate-200/50`}>
+                                                                <User size={20} strokeWidth={2.5} />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{group.name}</span>
+                                                                <span className="text-lg font-black text-slate-800 tracking-tight">
+                                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(group.total - group.paidAmount)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-2 bg-slate-50 rounded-xl text-slate-300 group-hover:text-rose-500 transition-colors">
+                                                            <ArrowRight size={16} />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {groupedDebts.length === 0 && (
+                                                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400 gap-3">
+                                                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
+                                                            <PiggyBank size={32} />
+                                                        </div>
+                                                        <span className="text-sm font-bold">Nenhuma dívida pendente com familiares!</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         {/* CATEGORY OVERVIEW - Matching Screenshot 3 */}
                                         <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-6 lg:p-8 border border-white/60 shadow-xl shadow-slate-200/40">
                                             <div className="flex items-center gap-3 mb-8">

@@ -76,7 +76,7 @@ export const generateMonthData = (year: number, month: number): MonthData => {
     const paidInMar2026 = ["ALUGUEL", "APPAI", "FATURA DO CARTÃO DO ANDRÉ ITAÚ", "CELULAR DA MARCELLY", "LILI TORRES", "JADY"];
     
     // List of items paid in Apr 2026
-    const paidInApr2026 = ["EMPRÉSTIMO COM LILI", "EMPRÉSTIMO COM CLÁUDIO", "ALUGUEL", "LILI TORRES", "SEGURO DO CARRO"];
+    const paidInApr2026 = ["ALUGUEL", "APPAI DO ANDRÉ", "INTERNET DA CASA", "INTERMÉDICA DO ANDRÉ", "SEGURO DO CARRO", "GUARDA ROUPAS", "FACULDADE", "PASSAGENS AÉREAS", "ESTADIA", "PASSAGENS ONIBUS", "MALA DO ANDRÉ", "RENEGOCIAR CARREFOUR", "EMPRÉSTIMO"];
 
     // 1. RECURRING/FIXED EXPENSES
     const cyclicalConfig = [
@@ -91,7 +91,9 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         { description: "CONTA DA CLARO ANDRÉ", amount: 75.00, category: "Moradia", day: 5 },
         { description: "CONTA DA VIVO ANDRÉ", amount: 110.00, category: "Moradia", day: 5 },
         { description: "SEGURO DO CARRO", amount: 143.00, category: "Transporte", day: 20 },
-        { description: "CONTA DA VIVO MARCELLY", amount: 66.60, category: "Moradia", day: 23 }
+        { description: "CONTA DA VIVO MARCELLY", amount: 66.60, category: "Moradia", day: 23 },
+        { description: "CARTÃO DO ITAÚ DA MARCELLY", amount: 200.00, category: "Outros", day: 24 },
+        { description: "CONTA DA CLARO DA MARCELLY", amount: 34.90, category: "Moradia", day: 5 }
     ];
 
     cyclicalConfig.forEach(c => {
@@ -151,7 +153,8 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         { desc: "EMPRÉSTIMO (LILI TORRES)", totalAmount: 800.00, cat: "Dívidas", day: 15, installments: 5, sY: 2026, sM: 3 },
         { desc: "EMPRÉSTIMO COM LILI (LILI TORRES)", totalAmount: 3429.60, cat: "Dívidas", day: 15, installments: 6, sY: 2026, sM: 4 },
         { desc: "EMPRÉSTIMO COM CLÁUDIO (CLÁUDIO SILVA)", totalAmount: 300.00, cat: "Dívidas", day: 15, installments: 1, sY: 2026, sM: 4 },
-        { desc: "EMPRÉSTIMO COM MÁRCIA BISPO (MARCIA BISPO)", totalAmount: 1100.00, cat: "Dívidas", day: 15, installments: 4, sY: 2026, sM: 4 }
+        { desc: "EMPRÉSTIMO COM MÁRCIA BISPO (MARCIA BISPO)", totalAmount: 1100.00, cat: "Dívidas", day: 15, installments: 4, sY: 2026, sM: 4 },
+        { desc: "PAGAR AO IAGO (IAGO)", totalAmount: 782.00, cat: "Dívidas", day: 15, installments: 1, sY: 2026, sM: 4 }
     ];
 
     finiteConfig.forEach(f => {
