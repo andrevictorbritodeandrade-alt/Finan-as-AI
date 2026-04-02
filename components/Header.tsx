@@ -74,6 +74,9 @@ const Header: React.FC<HeaderProps> = ({
                     >
                         <RefreshCw size={20} strokeWidth={3} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
                     </button>
+                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm hidden sm:block">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" referrerPolicy="no-referrer" />
+                    </div>
                 </div>
             </div>
 
