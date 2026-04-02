@@ -46,6 +46,8 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
     // New States for enhanced control
     const [groupType, setGroupType] = useState<string>('Despesas Variáveis');
     const [isInstallment, setIsInstallment] = useState(false);
+    const [isSuspended, setIsSuspended] = useState(false);
+    const [suspendedUntil, setSuspendedUntil] = useState('');
     const [currentInst, setCurrentInst] = useState(1);
     const [totalInst, setTotalInst] = useState(1);
 
@@ -61,6 +63,10 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
 
                 // Set Group Type (Fixed/Variable)
                 setGroupType(transaction.group || 'Despesas Variáveis');
+
+                // Set Suspension
+                setIsSuspended(transaction.isSuspended || false);
+                setSuspendedUntil(transaction.suspendedUntil || '');
 
                 // Set Installments
                 if (transaction.installments) {
@@ -86,6 +92,8 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                 setTransactionType('expenses');
                 setGroupType('Despesas Variáveis');
                 setIsInstallment(false);
+                setIsSuspended(false);
+                setSuspendedUntil('');
                 setCurrentInst(1);
                 setTotalInst(2);
             }
@@ -106,6 +114,10 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
             
             // Apply Group
             finalTransaction.group = groupType;
+
+            // Apply Suspension
+            finalTransaction.isSuspended = isSuspended;
+            finalTransaction.suspendedUntil = isSuspended ? suspendedUntil : '';
 
             // Apply Installments
             if (isInstallment && transactionType === 'expenses') {
@@ -297,6 +309,34 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             )}
                         </div>
                     )}
+
+                    {/* Suspension Logic */}
+                    <div className="space-y-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                                <FileWarning size={14} strokeWidth={3} /> Suspender Conta?
+                            </label>
+                            <div 
+                                onClick={() => setIsSuspended(!isSuspended)}
+                                className={`w-12 h-7 rounded-full flex items-center px-1 cursor-pointer transition-colors ${isSuspended ? 'bg-rose-500' : 'bg-slate-200'}`}
+                            >
+                                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${isSuspended ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                            </div>
+                        </div>
+                        
+                        {isSuspended && (
+                            <div className="pt-2 animate-fadeIn space-y-2">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase">Suspender até (Mês/Ano)</label>
+                                <input 
+                                    type="month" 
+                                    value={suspendedUntil}
+                                    onChange={(e) => setSuspendedUntil(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold outline-none focus:border-rose-500"
+                                />
+                                <p className="text-[10px] text-slate-400 font-medium italic">Deixe em branco para suspensão por tempo indeterminado.</p>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Category */}
                     <div className="space-y-2">

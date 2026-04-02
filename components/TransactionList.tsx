@@ -189,13 +189,20 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onToggl
                                     {/* CONTENT */}
                                     <div className="flex-1 flex flex-col gap-1 overflow-hidden z-10">
                                         <div className="flex justify-between items-start gap-3">
-                                            <input 
-                                                type="text"
-                                                value={item.description}
-                                                onChange={(e) => onUpdate({ ...item, description: e.target.value })}
-                                                onClick={(e) => e.stopPropagation()}
-                                                className={`flex-1 bg-transparent border-none p-0 focus:ring-0 font-extrabold text-sm sm:text-base leading-tight break-words outline-none ${item.paid ? 'text-gray-400 line-through' : isAllocation ? 'text-amber-900' : 'text-slate-800'}`}
-                                            />
+                                            <div className="flex-1 flex flex-col">
+                                                <input 
+                                                    type="text"
+                                                    value={item.description}
+                                                    onChange={(e) => onUpdate({ ...item, description: e.target.value })}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className={`flex-1 bg-transparent border-none p-0 focus:ring-0 font-extrabold text-sm sm:text-base leading-tight break-words outline-none ${item.paid ? 'text-gray-400 line-through' : isAllocation ? 'text-amber-900' : 'text-slate-800'}`}
+                                                />
+                                                {item.isSuspended && (
+                                                    <span className="text-[9px] font-black text-rose-500 uppercase tracking-tighter flex items-center gap-1">
+                                                        <FileWarning size={8} /> Suspensa {item.suspendedUntil ? `até ${item.suspendedUntil}` : 'indeterminado'}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="flex items-center gap-1">
                                                 <span className={`text-xs font-black opacity-50 ${item.paid ? 'text-gray-400' : 'text-slate-400'}`}>R$</span>
                                                 <input 

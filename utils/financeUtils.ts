@@ -150,7 +150,8 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         { desc: "PASSEIO DE SAFARI (JADY)", totalAmount: 800.00, cat: "Lazer", day: 15, installments: 5, sY: 2026, sM: 3 },
         { desc: "EMPRÉSTIMO (LILI TORRES)", totalAmount: 800.00, cat: "Dívidas", day: 15, installments: 5, sY: 2026, sM: 3 },
         { desc: "EMPRÉSTIMO COM LILI (LILI TORRES)", totalAmount: 3429.60, cat: "Dívidas", day: 15, installments: 6, sY: 2026, sM: 4 },
-        { desc: "EMPRÉSTIMO COM CLÁUDIO (CLÁUDIO SILVA)", totalAmount: 1100.00, cat: "Dívidas", day: 15, installments: 4, sY: 2026, sM: 4 }
+        { desc: "EMPRÉSTIMO COM CLÁUDIO (CLÁUDIO SILVA)", totalAmount: 300.00, cat: "Dívidas", day: 15, installments: 1, sY: 2026, sM: 4 },
+        { desc: "EMPRÉSTIMO COM MÁRCIA BISPO (MARCIA BISPO)", totalAmount: 1100.00, cat: "Dívidas", day: 15, installments: 4, sY: 2026, sM: 4 }
     ];
 
     finiteConfig.forEach(f => {
