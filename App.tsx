@@ -15,8 +15,8 @@ import { Target, Plus, ShoppingBag, User, Plane, Wallet, PiggyBank, Home as Home
 
 const App: React.FC = () => {
     // App State
-    const [currentMonth, setCurrentMonth] = useState(2); // Inicia em Fevereiro
-    const [currentYear, setCurrentYear] = useState(2026);
+    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); // Inicia no mês atual
+    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [monthData, setMonthData] = useState<MonthData | null>(null);
     const [view, setView] = useState<'home' | 'transactions' | 'goals'>('home');
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -26,6 +26,16 @@ const App: React.FC = () => {
     // Edit Modal State
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Force refresh for March 2026 updates
+    useEffect(() => {
+        const forceUpdate = localStorage.getItem('force_update_mar2026_v2');
+        if (!forceUpdate) {
+            localStorage.removeItem('financeData_2026_3');
+            localStorage.setItem('force_update_mar2026_v2', 'true');
+            window.location.reload();
+        }
+    }, []);
 
     // Ref for accessing latest data in closures/listeners
     const monthDataRef = useRef<MonthData | null>(null);
@@ -262,7 +272,7 @@ const App: React.FC = () => {
 
     const groupedDebts = useMemo(() => {
         if (!monthData) return [];
-        const targets = ['Lili Torres', 'Marcia Brito', 'Marcia Bispo', 'Rebecca Brito'];
+        const targets = ['Lili Torres', 'Marcia Brito', 'Marcia Bispo', 'Rebecca Brito', 'Jady'];
         const groups: Record<string, { name: string, total: number, paidAmount: number, items: Transaction[] }> = {};
 
         monthData.expenses.forEach(e => {
@@ -285,6 +295,7 @@ const App: React.FC = () => {
         if (n.includes('marcia brito')) return 'from-violet-500 to-purple-500 shadow-purple-500/20';
         if (n.includes('marcia bispo')) return 'from-blue-500 to-cyan-500 shadow-blue-500/20';
         if (n.includes('rebecca')) return 'from-amber-400 to-orange-500 shadow-orange-500/20';
+        if (n.includes('jady')) return 'from-teal-500 to-emerald-500 shadow-teal-500/20';
         return 'from-gray-600 to-slate-600';
     };
 

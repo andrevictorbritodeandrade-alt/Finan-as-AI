@@ -41,13 +41,14 @@ export const generateMonthData = (year: number, month: number): MonthData => {
     // Check if it's the initial month (Jan 2026) for "Paid" logic
     const isJan2026 = (year === 2026 && month === 1);
     const isFeb2026 = (year === 2026 && month === 2);
+    const isMar2026 = (year === 2026 && month === 3);
 
     // Base Incomes
     const newIncomes: Transaction[] = [
         { id: `inc_m_${year}_${month}`, description: `SALARIO MARCELLY`, amount: 3436.22, paid: isJan2026, date: salaryDate, category: 'Salário' },
         { id: `inc_a_${year}_${month}`, description: `SALARIO ANDRE`, amount: 3436.22, paid: isJan2026, date: salaryDate, category: 'Salário' },
-        { id: `inc_mum_m_${year}_${month}`, description: 'MUMBUCA MARCELLY', amount: 650.00, paid: isJan2026, date: mumbucaDate, category: 'Mumbuca' },
-        { id: `inc_mum_a_${year}_${month}`, description: 'MUMBUCA ANDRE', amount: 650.00, paid: isJan2026, date: mumbucaDate, category: 'Mumbuca' }
+        { id: `inc_mum_m_${year}_${month}`, description: 'MUMBUCA MARCELLY', amount: 598.00, paid: isJan2026, date: mumbucaDate, category: 'Mumbuca' },
+        { id: `inc_mum_a_${year}_${month}`, description: 'MUMBUCA ANDRE', amount: 598.00, paid: isJan2026, date: mumbucaDate, category: 'Mumbuca' }
     ];
 
     // --- 13º SALÁRIO LOGIC ---
@@ -70,6 +71,9 @@ export const generateMonthData = (year: number, month: number): MonthData => {
 
     // List of items paid in Jan 2026
     const paidInJan2026 = ["ALUGUEL", "REMÉDIOS", "PSICÓLOGA", "APPAI", "VIVO", "CLARO", "MULTAS", "RENEGOCIAR", "PASSAGENS", "FACULDADE", "CIDADANIA", "GUARDA ROUPAS", "CELULAR", "CONSERTO", "INTERNET", "INTERMÉDICA", "FATURA"];
+    
+    // List of items paid in Mar 2026
+    const paidInMar2026 = ["ALUGUEL", "APPAI", "FATURA DO CARTÃO DO ANDRÉ ITAÚ", "CELULAR DA MARCELLY", "LILI TORRES", "JADY"];
 
     // 1. RECURRING/FIXED EXPENSES
     const cyclicalConfig = [
@@ -100,6 +104,9 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         }
         if (isFeb2026) {
             if (c.description.includes("ITAÚ")) finalAmount = 57.00;
+        }
+        if (isMar2026) {
+            if (paidInMar2026.some(p => c.description.toUpperCase().includes(p))) isPaid = true;
         }
 
         newExpenses.push({
@@ -132,7 +139,9 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         { desc: "MULTAS", totalAmount: 1040.00, cat: "Transporte", day: 30, installments: 4, sY: 2025, sM: 10 },
         { desc: "EMPRÉSTIMO TIA CÉLIA", totalAmount: 1000.00, cat: "Dívidas", day: 10, installments: 10, sY: 2025, sM: 4 },
         { desc: "EMPRÉSTIMO CONSERTO CELULAR (MARCIA BRITO)", totalAmount: 130.00, cat: "Dívidas", day: 10, installments: 1, sY: 2026, sM: 2 },
-        { desc: "DEVOLVER O EMPRÉSTIMO (MARCIA BISPO)", totalAmount: 1000.00, cat: "Dívidas", day: 10, installments: 1, sY: 2026, sM: 2 }
+        { desc: "DEVOLVER O EMPRÉSTIMO (MARCIA BISPO)", totalAmount: 1000.00, cat: "Dívidas", day: 10, installments: 1, sY: 2026, sM: 2 },
+        { desc: "PASSEIO DE SAFARI (JADY)", totalAmount: 800.00, cat: "Lazer", day: 15, installments: 5, sY: 2026, sM: 3 },
+        { desc: "EMPRÉSTIMO (LILI TORRES)", totalAmount: 800.00, cat: "Dívidas", day: 15, installments: 5, sY: 2026, sM: 3 }
     ];
 
     finiteConfig.forEach(f => {
@@ -141,6 +150,9 @@ export const generateMonthData = (year: number, month: number): MonthData => {
             let isPaid = false;
             if (isJan2026) {
                 if (paidInJan2026.some(p => f.desc.toUpperCase().includes(p))) isPaid = true;
+            }
+            if (isMar2026) {
+                if (paidInMar2026.some(p => f.desc.toUpperCase().includes(p))) isPaid = true;
             }
             const installmentAmount = f.totalAmount / f.installments;
             newExpenses.push({
@@ -164,7 +176,7 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         const mumbucaOnly = newIncomes.filter(i => i.category === 'Mumbuca').reduce((acc,i) => acc + i.amount, 0);
         const totalCommitted = newExpenses.reduce((acc, e) => acc + e.amount, 0);
         
-        const projectedSurplus = (salaryOnly + (mumbucaOnly * 0.92)) - totalCommitted;
+        const projectedSurplus = (salaryOnly + mumbucaOnly) - totalCommitted;
 
         if (projectedSurplus > 100) {
             const valCompras = projectedSurplus * 0.30;

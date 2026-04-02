@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Transaction, TransactionType } from '../types';
-import { X, Save, Calendar, Tag, DollarSign, Type, Check, ChevronDown, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { X, Save, Calendar, Tag, DollarSign, Type, Check, ChevronDown, ArrowUpCircle, ArrowDownCircle, Layers, Hash } from 'lucide-react';
 import { 
     Banknote, CreditCard, Home, ShoppingCart, Car, Heart, GraduationCap, 
     Palmtree, TrendingDown, TrendingUp, Fuel, Gift, Coins, MoreHorizontal, FileWarning 
@@ -42,15 +42,36 @@ const CATEGORIES = [
 const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onClose, transaction, onSave }) => {
     const [formData, setFormData] = useState<Transaction | null>(null);
     const [transactionType, setTransactionType] = useState<TransactionType>('expenses');
+    
+    // New States for enhanced control
+    const [groupType, setGroupType] = useState<string>('Despesas Variáveis');
+    const [isInstallment, setIsInstallment] = useState(false);
+    const [currentInst, setCurrentInst] = useState(1);
+    const [totalInst, setTotalInst] = useState(1);
 
     useEffect(() => {
         if (isOpen) {
             if (transaction) {
                 // Editing existing
                 setFormData({ ...transaction });
-                // Infer type (simple logic, parent usually knows, but we can default to expenses if unknown or check category)
+                
+                // Set Transaction Type (Income/Expense)
                 const isIncome = ['Salário', 'Mumbuca', 'Renda Extra', 'Doação'].includes(transaction.category);
                 setTransactionType(isIncome ? 'incomes' : 'expenses');
+
+                // Set Group Type (Fixed/Variable)
+                setGroupType(transaction.group || 'Despesas Variáveis');
+
+                // Set Installments
+                if (transaction.installments) {
+                    setIsInstallment(true);
+                    setCurrentInst(transaction.installments.current);
+                    setTotalInst(transaction.installments.total);
+                } else {
+                    setIsInstallment(false);
+                    setCurrentInst(1);
+                    setTotalInst(1);
+                }
             } else {
                 // Creating new
                 setFormData({
@@ -62,7 +83,11 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                     date: new Date().toISOString().split('T')[0],
                     dueDate: new Date().toISOString().split('T')[0],
                 });
-                setTransactionType('expenses'); // Default to expense as per user request (Adding debt)
+                setTransactionType('expenses');
+                setGroupType('Despesas Variáveis');
+                setIsInstallment(false);
+                setCurrentInst(1);
+                setTotalInst(2);
             }
         }
     }, [isOpen, transaction]);
@@ -76,12 +101,27 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (formData) {
-            onSave(formData, transactionType);
+            // Prepare final object
+            const finalTransaction = { ...formData };
+            
+            // Apply Group
+            finalTransaction.group = groupType;
+
+            // Apply Installments
+            if (isInstallment && transactionType === 'expenses') {
+                finalTransaction.installments = {
+                    current: currentInst,
+                    total: totalInst
+                };
+            } else {
+                delete finalTransaction.installments;
+            }
+
+            onSave(finalTransaction, transactionType);
             onClose();
         }
     };
 
-    // Determine correct date field (some use date, some dueDate)
     const dateField = formData.dueDate ? 'dueDate' : 'date';
     const currentDateValue = formData.dueDate || formData.date || '';
 
@@ -96,7 +136,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             {transaction ? 'Editar' : 'Nova'}
                         </span>
                         <h2 className="text-xl font-black text-slate-900">
-                            {transaction ? 'Editar Transação' : 'Adicionar Movimentação'}
+                            {transaction ? 'Detalhes da Conta' : 'Adicionar Conta'}
                         </h2>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-800 transition-colors">
@@ -133,6 +173,39 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                         </button>
                     </div>
 
+                    {/* Expense Group Selector (Fixed vs Variable) - Only for Expenses */}
+                    {transactionType === 'expenses' && (
+                        <div className="space-y-2">
+                             <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
+                                <Layers size={14} strokeWidth={3} /> Classificação
+                            </label>
+                            <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                                <button
+                                    type="button"
+                                    onClick={() => setGroupType('Despesas Fixas')}
+                                    className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
+                                        groupType === 'Despesas Fixas' 
+                                        ? 'bg-teal-100 text-teal-700' 
+                                        : 'text-slate-400'
+                                    }`}
+                                >
+                                    Fixa / Recorrente
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setGroupType('Despesas Variáveis')}
+                                    className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
+                                        groupType === 'Despesas Variáveis' 
+                                        ? 'bg-indigo-100 text-indigo-700' 
+                                        : 'text-slate-400'
+                                    }`}
+                                >
+                                    Variável / Pontual
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Description */}
                     <div className="space-y-2">
                         <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
@@ -141,7 +214,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                         <input 
                             type="text" 
                             required
-                            placeholder="Ex: Supermercado, Salário..."
+                            placeholder="Ex: Supermercado, Aluguel..."
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-extrabold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm placeholder:font-normal"
@@ -182,6 +255,48 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             </button>
                         </div>
                     </div>
+
+                    {/* Installments Logic (Only for Expenses) */}
+                    {transactionType === 'expenses' && (
+                        <div className="space-y-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                                    <Hash size={14} strokeWidth={3} /> É Parcelado?
+                                </label>
+                                <div 
+                                    onClick={() => setIsInstallment(!isInstallment)}
+                                    className={`w-12 h-7 rounded-full flex items-center px-1 cursor-pointer transition-colors ${isInstallment ? 'bg-indigo-500' : 'bg-slate-200'}`}
+                                >
+                                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${isInstallment ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                </div>
+                            </div>
+                            
+                            {isInstallment && (
+                                <div className="grid grid-cols-2 gap-4 pt-2 animate-fadeIn">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase">Parcela Atual</label>
+                                        <input 
+                                            type="number" 
+                                            min="1"
+                                            value={currentInst}
+                                            onChange={(e) => setCurrentInst(parseInt(e.target.value) || 1)}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold outline-none focus:border-indigo-500 text-center"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase">Total Parcelas</label>
+                                        <input 
+                                            type="number" 
+                                            min="2"
+                                            value={totalInst}
+                                            onChange={(e) => setTotalInst(parseInt(e.target.value) || 2)}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold outline-none focus:border-indigo-500 text-center"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Category */}
                     <div className="space-y-2">
