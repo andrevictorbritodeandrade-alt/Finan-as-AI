@@ -11,7 +11,7 @@ import { generateMonthData, getStorageKey } from './utils/financeUtils';
 import { db, auth, isConfigured, onAuthStateChanged, signInAnonymously } from './services/firebaseConfig';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { FAMILY_ID } from './constants';
-import { Target, Plus, ShoppingBag, User, Plane, Wallet, PiggyBank, Home as HomeIcon, Palmtree, Heart, Car, GraduationCap, MoreHorizontal, TrendingUp, ShoppingCart } from 'lucide-react';
+import { Target, Plus, ShoppingBag, User, Plane, Wallet, PiggyBank, Home as HomeIcon, Palmtree, Heart, Car, GraduationCap, MoreHorizontal, TrendingUp, ShoppingCart, FileWarning } from 'lucide-react';
 
 const App: React.FC = () => {
     // App State
@@ -23,6 +23,8 @@ const App: React.FC = () => {
     const [syncStatus, setSyncStatus] = useState<'offline' | 'syncing' | 'online'>('offline');
     const [transactionListType, setTransactionListType] = useState<TransactionType>('expenses');
     const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'goals'>('overview');
+
+    const [showSecurityMessage, setShowSecurityMessage] = useState(false);
 
     // Edit Modal State
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -231,7 +233,7 @@ const App: React.FC = () => {
         };
     }, [monthData]);
 
-    const balance = stats.combined.paid - stats.realExpenses.paid;
+    const balance = stats.combined.total - stats.realExpenses.paid;
 
     // Group Debts by Person
     const groupedDebts = useMemo(() => {
@@ -324,14 +326,23 @@ const App: React.FC = () => {
                         ))}
                     </div>
 
-                    <div className="mt-8 flex items-center gap-3 p-2">
-                        <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" referrerPolicy="no-referrer" />
+                    <div className="mt-8 flex items-center justify-between p-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" referrerPolicy="no-referrer" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-black text-slate-800">André Silva</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Status: Conectado</span>
+                            </div>
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-sm font-black text-slate-800">André Silva</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Status: Conectado</span>
-                        </div>
+                        <button 
+                            onClick={() => setShowSecurityMessage(true)}
+                            className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                            title="Configurações"
+                        >
+                            <MoreHorizontal size={20} />
+                        </button>
                     </div>
                 </div>
             </aside>
@@ -367,6 +378,28 @@ const App: React.FC = () => {
                     transaction={editingTransaction}
                     onSave={handleSaveTransaction}
                 />
+
+                {showSecurityMessage && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-fadeIn">
+                        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl flex flex-col items-center text-center gap-6">
+                            <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center shadow-inner">
+                                <FileWarning size={40} strokeWidth={2.5} />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight">Segurança de Dados</h3>
+                                <p className="text-sm font-bold text-slate-500 leading-relaxed">
+                                    Por diretriz de segurança inabalável, a exclusão de contas e transações foi desativada. Seus dados estão protegidos e permanecerão no backup do sistema e na nuvem para sempre.
+                                </p>
+                            </div>
+                            <button 
+                                onClick={() => setShowSecurityMessage(false)}
+                                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 scroll-smooth">
                     {view === 'home' && (
