@@ -27,6 +27,16 @@ const App: React.FC = () => {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+    // Force refresh for April 2026 updates
+    useEffect(() => {
+        const forceUpdateApr = localStorage.getItem('force_update_apr2026');
+        if (!forceUpdateApr) {
+            localStorage.removeItem('financeData_2026_4');
+            localStorage.setItem('force_update_apr2026', 'true');
+            window.location.reload();
+        }
+    }, []);
+
     // Force refresh for March 2026 updates
     useEffect(() => {
         const forceUpdate = localStorage.getItem('force_update_mar2026_v2');
@@ -483,6 +493,7 @@ const App: React.FC = () => {
                             transactions={monthData[transactionListType]}
                             onTogglePaid={(id, paid) => handleTogglePaid(id, paid, transactionListType)}
                             onEdit={handleEditTransaction}
+                            onUpdate={(updated) => handleSaveTransaction(updated, transactionListType)}
                         />
                     </div>
                 )}

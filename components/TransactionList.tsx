@@ -10,6 +10,7 @@ interface TransactionListProps {
     transactions: Transaction[];
     onTogglePaid: (id: string, paid: boolean) => void;
     onEdit: (transaction: Transaction) => void;
+    onUpdate: (transaction: Transaction) => void;
     compact?: boolean;
 }
 
@@ -46,7 +47,7 @@ const getCategoryColor = (category: string) => {
     }
 };
 
-const TransactionList: React.FC<TransactionListProps> = ({ transactions, onTogglePaid, onEdit, compact = false }) => {
+const TransactionList: React.FC<TransactionListProps> = ({ transactions, onTogglePaid, onEdit, onUpdate, compact = false }) => {
     const format = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
     // Grouping Logic
@@ -188,12 +189,23 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onToggl
                                     {/* CONTENT */}
                                     <div className="flex-1 flex flex-col gap-1 overflow-hidden z-10">
                                         <div className="flex justify-between items-start gap-3">
-                                            <span className={`font-extrabold text-sm sm:text-base leading-tight break-words ${item.paid ? 'text-gray-400 line-through' : isAllocation ? 'text-amber-900' : 'text-slate-800'}`}>
-                                                {item.description}
-                                            </span>
-                                            <span className={`font-black text-sm sm:text-base whitespace-nowrap shrink-0 tracking-tight ${item.paid ? 'text-gray-400' : isAllocation ? 'text-amber-900' : 'text-slate-900'}`}>
-                                                {format(item.amount)}
-                                            </span>
+                                            <input 
+                                                type="text"
+                                                value={item.description}
+                                                onChange={(e) => onUpdate({ ...item, description: e.target.value })}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className={`flex-1 bg-transparent border-none p-0 focus:ring-0 font-extrabold text-sm sm:text-base leading-tight break-words outline-none ${item.paid ? 'text-gray-400 line-through' : isAllocation ? 'text-amber-900' : 'text-slate-800'}`}
+                                            />
+                                            <div className="flex items-center gap-1">
+                                                <span className={`text-xs font-black opacity-50 ${item.paid ? 'text-gray-400' : 'text-slate-400'}`}>R$</span>
+                                                <input 
+                                                    type="number"
+                                                    value={item.amount}
+                                                    onChange={(e) => onUpdate({ ...item, amount: parseFloat(e.target.value) || 0 })}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className={`w-20 sm:w-24 bg-transparent border-none p-0 focus:ring-0 font-black text-sm sm:text-base text-right outline-none tracking-tight ${item.paid ? 'text-gray-400' : isAllocation ? 'text-amber-900' : 'text-slate-900'}`}
+                                                />
+                                            </div>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2">
                                             <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide ${getCategoryColor(item.category)} bg-opacity-50`}>
