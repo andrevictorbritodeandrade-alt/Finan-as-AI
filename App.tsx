@@ -50,15 +50,15 @@ const App: React.FC = () => {
         localStorage.setItem(`checkin_${currentYear}_${currentMonth}`, JSON.stringify(newState));
     };
 
-    // Force refresh to pull updated categories and grouping (v7)
+    // Force refresh to pull updated categories and grouping (v8)
     useEffect(() => {
-        const forceUpdateV7 = localStorage.getItem('force_update_v7_formatting');
-        if (!forceUpdateV7) {
+        const forceUpdateV8 = localStorage.getItem('force_update_v8_formatting');
+        if (!forceUpdateV8) {
             localStorage.removeItem('financeData_2026_3');
             localStorage.removeItem('financeData_2026_4');
             localStorage.removeItem('financeData_2026_5');
             localStorage.removeItem('financeData_2026_6');
-            localStorage.setItem('force_update_v7_formatting', 'true');
+            localStorage.setItem('force_update_v8_formatting', 'true');
             window.location.reload();
         }
     }, []);
@@ -204,6 +204,29 @@ const App: React.FC = () => {
                         installments: { current: 1, total: 4 }
                     });
                 }
+
+                // --- NEW REQUESTED EXPENSES FOR MARCIA BRITO (MAY 2026) ---
+                const marciaBritoItems = [
+                    { id: 'fin_KRAUTOPEÇAS_1', desc: 'KR AUTOPEÇAS', amount: 41.57, cat: 'Transporte', inst: { current: 1, total: 7 } },
+                    { id: 'fin_FILHÃOAUTOPEÇAS_1', desc: 'FILHÃO AUTOPEÇAS', amount: 40.00, cat: 'Transporte', inst: { current: 1, total: 3 } },
+                    { id: 'fin_CABESOM_1', desc: 'CABESOM', amount: 89.50, cat: 'Outros', inst: { current: 1, total: 2 } },
+                    { id: 'fin_REMÉDIOSMARCIABRITO_1', desc: 'REMÉDIOS (MARCIA BRITO)', amount: 82.03, cat: 'Saúde', inst: { current: 1, total: 3 } }
+                ];
+
+                marciaBritoItems.forEach(item => {
+                    if (!data.expenses.some(e => e.description.toUpperCase().includes(item.desc))) {
+                        data.expenses.push({
+                            id: item.id,
+                            description: item.desc,
+                            amount: item.amount,
+                            category: item.cat,
+                            paid: false,
+                            dueDate: "2026-05-12",
+                            group: "MARCIA BRITO",
+                            installments: item.inst
+                        });
+                    }
+                });
             }
 
             return data;
@@ -278,6 +301,29 @@ const App: React.FC = () => {
                                 installments: { current: 1, total: 4 }
                             });
                         }
+
+                        // --- NEW REQUESTED EXPENSES FOR MARCIA BRITO (MAY 2026) ---
+                        const marciaBritoItemsCloud = [
+                            { id: 'fin_KRAUTOPEÇAS_1', desc: 'KR AUTOPEÇAS', amount: 41.57, cat: 'Transporte', inst: { current: 1, total: 7 } },
+                            { id: 'fin_FILHÃOAUTOPEÇAS_1', desc: 'FILHÃO AUTOPEÇAS', amount: 40.00, cat: 'Transporte', inst: { current: 1, total: 3 } },
+                            { id: 'fin_CABESOM_1', desc: 'CABESOM', amount: 89.50, cat: 'Outros', inst: { current: 1, total: 2 } },
+                            { id: 'fin_REMÉDIOSMARCIABRITO_1', desc: 'REMÉDIOS (MARCIA BRITO)', amount: 82.03, cat: 'Saúde', inst: { current: 1, total: 3 } }
+                        ];
+
+                        marciaBritoItemsCloud.forEach(item => {
+                            if (!data.expenses.some(e => e.description.toUpperCase().includes(item.desc))) {
+                                data.expenses.push({
+                                    id: item.id,
+                                    description: item.desc,
+                                    amount: item.amount,
+                                    category: item.cat,
+                                    paid: false,
+                                    dueDate: "2026-05-12",
+                                    group: "MARCIA BRITO",
+                                    installments: item.inst
+                                });
+                            }
+                        });
                     }
 
                     return data;
