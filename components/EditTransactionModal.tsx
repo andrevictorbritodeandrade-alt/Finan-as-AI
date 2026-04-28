@@ -208,7 +208,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                     onClick={() => setGroupType('Despesas Variáveis')}
                                     className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${
                                         groupType === 'Despesas Variáveis' 
-                                        ? 'bg-indigo-100 text-indigo-700 shadow-sm' 
+                                        ? 'bg-emerald-100 text-emerald-700 shadow-sm' 
                                         : 'text-slate-400 hover:text-slate-600'
                                     }`}
                                 >
@@ -229,7 +229,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             placeholder="Ex: Supermercado, Aluguel..."
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm placeholder:font-normal placeholder:opacity-50"
+                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none transition-all shadow-sm placeholder:font-normal placeholder:opacity-50"
                         />
                     </div>
 
@@ -245,7 +245,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                 required
                                 value={formData.amount || ''}
                                 onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
-                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none transition-all shadow-sm"
                             />
                         </div>
 
@@ -277,7 +277,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                 </label>
                                 <div 
                                     onClick={() => setIsInstallment(!isInstallment)}
-                                    className={`w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-colors ${isInstallment ? 'bg-indigo-500' : 'bg-slate-200'}`}
+                                    className={`w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-colors ${isInstallment ? 'bg-emerald-500' : 'bg-slate-200'}`}
                                 >
                                     <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${isInstallment ? 'translate-x-6' : 'translate-x-0'}`}></div>
                                 </div>
@@ -292,7 +292,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                             min="1"
                                             value={currentInst}
                                             onChange={(e) => setCurrentInst(parseInt(e.target.value) || 1)}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-black outline-none focus:border-indigo-500 text-center text-lg"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-black outline-none focus:border-emerald-500 text-center text-lg"
                                         />
                                     </div>
                                     <div>
@@ -302,7 +302,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                             min="2"
                                             value={totalInst}
                                             onChange={(e) => setTotalInst(parseInt(e.target.value) || 2)}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-black outline-none focus:border-indigo-500 text-center text-lg"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-black outline-none focus:border-emerald-500 text-center text-lg"
                                         />
                                     </div>
                                 </div>
@@ -333,7 +333,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                     onChange={(e) => setSuspendedUntil(e.target.value)}
                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-black outline-none focus:border-rose-500 text-lg"
                                 />
-                                <p className="text-[10px] text-slate-400 font-black italic">Deixe em branco para suspensão por tempo indeterminado.</p>
+                                <p className="text-sm text-slate-400 font-black italic">Deixe em branco para suspensão por tempo indeterminado.</p>
                             </div>
                         )}
                     </div>
@@ -348,7 +348,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                 value={formData.category}
                                 onChange={(e) => handleChange('category', e.target.value)}
                                 style={{ paddingLeft: '48px' }}
-                                className="w-full appearance-none bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                                className="w-full appearance-none bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none transition-all shadow-sm"
                             >
                                 {CATEGORIES.map(cat => (
                                     <option key={cat} value={cat}>{cat}</option>
@@ -357,7 +357,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                                 <ChevronDown size={24} strokeWidth={3} />
                             </div>
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-600">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-600">
                                 {getCategoryIcon(formData.category)}
                             </div>
                         </div>
@@ -372,7 +372,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             type="date" 
                             value={currentDateValue}
                             onChange={(e) => handleChange(dateField, e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none transition-all shadow-sm"
                         />
                     </div>
 

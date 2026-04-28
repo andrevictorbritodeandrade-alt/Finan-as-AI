@@ -6,7 +6,6 @@ import SummaryCard from './components/SummaryCard';
 import TransactionList from './components/TransactionList';
 import EditTransactionModal from './components/EditTransactionModal';
 import FinancialHealthWidget from './components/FinancialHealthWidget';
-import ExpenseDistribution from './components/ExpenseDistribution';
 import { MonthData, TransactionType, Transaction, FinancialProjection } from './types';
 import { generateMonthData, getStorageKey } from './utils/financeUtils';
 import { db, auth, isConfigured, onAuthStateChanged, signInAnonymously } from './services/firebaseConfig';
@@ -23,11 +22,11 @@ const App: React.FC = () => {
     const [currentMonth, setCurrentMonth] = useState(isLateApril ? 5 : now.getMonth() + 1);
     const [currentYear, setCurrentYear] = useState(isLateApril ? 2026 : now.getFullYear());
     const [monthData, setMonthData] = useState<MonthData | null>(null);
-    const [view, setView] = useState<'home' | 'transactions' | 'goals'>('home');
+    const [view, setView] = useState<'home' | 'transactions'>('home');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [syncStatus, setSyncStatus] = useState<'offline' | 'syncing' | 'online'>('offline');
     const [transactionListType, setTransactionListType] = useState<TransactionType>('expenses');
-    const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'goals'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'transactions'>('overview');
 
     const [showSecurityMessage, setShowSecurityMessage] = useState(false);
 
@@ -143,21 +142,75 @@ const App: React.FC = () => {
         const key = getStorageKey(year, month);
         const local = localStorage.getItem(key);
         
-        const filterUnwanted = (data: MonthData): MonthData => {
+        const ensureSystemIntegrity = (data: MonthData): MonthData => {
+            // 1. Remove VIVO and EMPRÉSTIMO JADY
             if (year === 2026 && (month === 3 || month === 4 || month === 5)) {
-                return {
-                    ...data,
-                    expenses: data.expenses.filter(e => 
-                        !e.description.toUpperCase().includes("VIVO ANDRÉ") && 
-                        !e.description.toUpperCase().includes("VIVO MARCELLY")
-                    )
-                };
+                data.expenses = data.expenses.filter(e => 
+                    !e.description.toUpperCase().includes("VIVO ANDRÉ") && 
+                    !e.description.toUpperCase().includes("VIVO MARCELLY") &&
+                    !e.description.toUpperCase().includes("EMPRÉSTIMO JADY")
+                );
             }
+
+            // 2. Fix "SEGURO DO CARRO" category/group
+            data.expenses = data.expenses.map(e => {
+                if (e.description.toUpperCase() === "SEGURO DO CARRO") {
+                    return { ...e, category: "Moradia", group: "MORADIA" };
+                }
+                return e;
+            });
+
+            // 3. User Requested Loan Corrections for MAY 2026
+            if (year === 2026 && month === 5) {
+                data.expenses = data.expenses.map(e => {
+                    const desc = e.description.toUpperCase();
+                    // CELULAR DA MARCELLY: 3 de 12
+                    if (desc.includes("CELULAR DA MARCELLY")) {
+                        return { ...e, installments: { current: 3, total: 12 }, amount: 385.74 };
+                    }
+                    // EMPRÉSTIMO COM LILI: 800 reais, 2 de 5
+                    if (desc.includes("EMPRÉSTIMO COM LILI")) {
+                        return { ...e, installments: { current: 2, total: 5 }, amount: 800.00 };
+                    }
+                    // PASSEIO DE SAFARI: 3 de 6, valor 571,60
+                    if (desc.includes("PASSEIO DE SAFARI")) {
+                        return { ...e, installments: { current: 3, total: 6 }, amount: 571.60 };
+                    }
+                    // EMPRÉSTIMO COM MARCIA BISPO: 1 de 4
+                    if (desc.includes("EMPRÉSTIMO COM MARCIA BISPO")) {
+                        return { ...e, installments: { current: 1, total: 4 }, amount: 275.00 };
+                    }
+                    // REFORMA DO SOFÁ DE CAXIAS: 2 de 5
+                    if (desc.includes("REFORMA DO SOFÁ DE CAXIAS")) {
+                        return { ...e, installments: { current: 2, total: 5 }, amount: 115.00 };
+                    }
+                    // MÃO DE OBRA DO DAVI: 1 de 3
+                    if (desc.includes("MÃO DE OBRA DO DAVI")) {
+                        return { ...e, installments: { current: 1, total: 3 }, amount: 124.27 };
+                    }
+                    return e;
+                });
+
+                // Ensure "EMPRÉSTIMO COM MARCIA BISPO" exists if not found
+                if (!data.expenses.some(e => e.description.toUpperCase().includes("EMPRÉSTIMO COM MARCIA BISPO"))) {
+                    data.expenses.push({
+                        id: `fin_EMPRÉSTIMOCOMMARCIABISPO_1`,
+                        description: "EMPRÉSTIMO COM MARCIA BISPO",
+                        amount: 275.00,
+                        category: "Dívidas",
+                        paid: false,
+                        dueDate: "2026-05-15",
+                        group: "MARCIA BISPO",
+                        installments: { current: 1, total: 4 }
+                    });
+                }
+            }
+
             return data;
         };
 
         if (local) {
-            setMonthData(filterUnwanted(JSON.parse(local)));
+            setMonthData(ensureSystemIntegrity(JSON.parse(local)));
         } else {
             const newData = generateMonthData(year, month);
             setMonthData(newData);
@@ -181,16 +234,56 @@ const App: React.FC = () => {
                 let cloudData = snapshot.data() as MonthData;
                 const localData = monthDataRef.current;
 
-                // Apply global filter to cloud data as well
-                if (year === 2026 && (month === 3 || month === 4 || month === 5)) {
-                    cloudData = {
-                        ...cloudData,
-                        expenses: cloudData.expenses.filter(e => 
+                // Apply system integrity filter to cloud data
+                const ensureSystemIntegrity = (data: MonthData): MonthData => {
+                    // 1. Remove VIVO and EMPRÉSTIMO JADY
+                    if (year === 2026 && (month === 3 || month === 4 || month === 5)) {
+                        data.expenses = data.expenses.filter(e => 
                             !e.description.toUpperCase().includes("VIVO ANDRÉ") && 
-                            !e.description.toUpperCase().includes("VIVO MARCELLY")
-                        )
-                    };
-                }
+                            !e.description.toUpperCase().includes("VIVO MARCELLY") &&
+                            !e.description.toUpperCase().includes("EMPRÉSTIMO JADY")
+                        );
+                    }
+
+                    // 2. Fix "SEGURO DO CARRO" category/group
+                    data.expenses = data.expenses.map(e => {
+                        if (e.description.toUpperCase() === "SEGURO DO CARRO") {
+                            return { ...e, category: "Moradia", group: "MORADIA" };
+                        }
+                        return e;
+                    });
+
+                    // 3. User Requested Loan Corrections for MAY 2026
+                    if (year === 2026 && month === 5) {
+                        data.expenses = data.expenses.map(e => {
+                            const desc = e.description.toUpperCase();
+                            if (desc.includes("CELULAR DA MARCELLY")) return { ...e, installments: { current: 3, total: 12 }, amount: 385.74 };
+                            if (desc.includes("EMPRÉSTIMO COM LILI")) return { ...e, installments: { current: 2, total: 5 }, amount: 800.00 };
+                            if (desc.includes("PASSEIO DE SAFARI")) return { ...e, installments: { current: 3, total: 6 }, amount: 571.60 };
+                            if (desc.includes("EMPRÉSTIMO COM MARCIA BISPO")) return { ...e, installments: { current: 1, total: 4 }, amount: 275.00 };
+                            if (desc.includes("REFORMA DO SOFÁ DE CAXIAS")) return { ...e, installments: { current: 2, total: 5 }, amount: 115.00 };
+                            if (desc.includes("MÃO DE OBRA DO DAVI")) return { ...e, installments: { current: 1, total: 3 }, amount: 124.27 };
+                            return e;
+                        });
+
+                        if (!data.expenses.some(e => e.description.toUpperCase().includes("EMPRÉSTIMO COM MARCIA BISPO"))) {
+                            data.expenses.push({
+                                id: `fin_EMPRÉSTIMOCOMMARCIABISPO_1`,
+                                description: "EMPRÉSTIMO COM MARCIA BISPO",
+                                amount: 275.00,
+                                category: "Dívidas",
+                                paid: false,
+                                dueDate: "2026-05-15",
+                                group: "MARCIA BISPO",
+                                installments: { current: 1, total: 4 }
+                            });
+                        }
+                    }
+
+                    return data;
+                };
+
+                cloudData = ensureSystemIntegrity(cloudData);
 
                 // Only update if cloud data is newer
                 if (!localData || cloudData.updatedAt > localData.updatedAt) {
@@ -323,7 +416,6 @@ const App: React.FC = () => {
             salary: { total: 0, paid: 0 }, 
             combined: { total: 0, paid: 0 }, 
             realExpenses: { total: 0, paid: 0 },
-            distribution: { total: 0, paid: 0 },
             surplusRaw: 0
         };
 
@@ -340,10 +432,9 @@ const App: React.FC = () => {
         
         // Filter out suspended transactions from totals
         const realExpenses = [
-            ...monthData.expenses.filter(e => !e.isDistribution && !isActuallySuspended(e)),
+            ...monthData.expenses.filter(e => !isActuallySuspended(e)),
             ...monthData.avulsosItems.filter(e => !isActuallySuspended(e))
         ];
-        const distribution = monthData.expenses.filter(e => e.isDistribution && !isActuallySuspended(e));
 
         const sum = (arr: Transaction[]) => arr.reduce((acc, t) => acc + t.amount, 0);
         const sumPaid = (arr: Transaction[]) => arr.filter(t => t.paid).reduce((acc, t) => acc + t.amount, 0);
@@ -354,12 +445,11 @@ const App: React.FC = () => {
             salary: { total: sum(salary), paid: sumPaid(salary) },
             combined: { total: sum(combined), paid: sumPaid(combined) },
             realExpenses: { total: sum(realExpenses), paid: sumPaid(realExpenses) },
-            distribution: { total: sum(distribution), paid: sumPaid(distribution) },
             surplusRaw
         };
     }, [monthData, currentYear, currentMonth]);
 
-    const balance = stats.combined.total - stats.realExpenses.paid - stats.distribution.paid;
+    const balance = stats.combined.total - stats.realExpenses.paid;
 
     // Group Debts by Person
     const groupedDebts = useMemo(() => {
@@ -383,13 +473,13 @@ const App: React.FC = () => {
     }, [monthData]);
 
     const getDebtColor = (name: string) => {
-        if (name.includes('LILI')) return 'from-rose-500 to-pink-600';
-        if (name.includes('MARCIA')) return 'from-indigo-500 to-blue-600';
-        if (name.includes('JADY')) return 'from-amber-500 to-orange-600';
-        if (name.includes('CLAUDIO')) return 'from-emerald-500 to-teal-600';
-        if (name.includes('REBECCA')) return 'from-violet-500 to-purple-600';
-        if (name.includes('IAGO')) return 'from-sky-500 to-cyan-600';
-        return 'from-slate-600 to-slate-800';
+        if (name.includes('LILI')) return 'from-teal-400 to-emerald-500';
+        if (name.includes('MARCIA')) return 'from-emerald-500 to-teal-600';
+        if (name.includes('JADY')) return 'from-green-400 to-emerald-500';
+        if (name.includes('CLAUDIO')) return 'from-emerald-600 to-teal-700';
+        if (name.includes('REBECCA')) return 'from-teal-500 to-emerald-600';
+        if (name.includes('IAGO')) return 'from-emerald-400 to-teal-500';
+        return 'from-emerald-700 to-teal-800';
     };
 
     const sidebarAccounts = monthData?.bankAccounts || [];
@@ -407,7 +497,7 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="flex h-screen w-full bg-[#f8fafc] text-slate-900 font-sans overflow-hidden">
+        <div className="flex h-screen w-full bg-[#f0fdf4] text-slate-900 font-sans overflow-hidden">
             {/* Sidebar - Desktop */}
             <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200 p-6 z-50 shadow-xl shadow-slate-200/20">
                 <div className="flex items-center gap-3 mb-10">
@@ -432,13 +522,7 @@ const App: React.FC = () => {
                         <ShoppingBag size={20} />
                         Extrato Detalhado
                     </button>
-                    <button 
-                        onClick={() => { setView('goals'); }}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all font-bold text-sm ${view === 'goals' ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' : 'text-slate-500 hover:bg-slate-50'}`}
-                    >
-                        <Target size={20} />
-                        Metas & Planejamento
-                    </button>
+
                 </nav>
 
             </aside>
@@ -446,7 +530,7 @@ const App: React.FC = () => {
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 {/* Background Decoration */}
                 <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-teal-100/30 blur-[120px] rounded-full -z-10"></div>
-                <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-100/30 blur-[100px] rounded-full -z-10"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-100/30 blur-[100px] rounded-full -z-10"></div>
 
                 <Header 
                     month={currentMonth} 
@@ -499,7 +583,7 @@ const App: React.FC = () => {
 
                 <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 scroll-smooth relative">
                     {/* Fade effect on scroll top */}
-                    <div className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#f8fafc] via-[#f8fafc]/80 to-transparent z-[15] pointer-events-none -mt-4 lg:-mt-8 -mx-4 lg:-mx-8"></div>
+                    <div className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#f0fdf4] via-[#f0fdf4]/80 to-transparent z-[15] pointer-events-none -mt-4 lg:-mt-8 -mx-4 lg:-mx-8"></div>
                     
                     <AnimatePresence mode="wait">
                         {view === 'home' && (
@@ -530,6 +614,70 @@ const App: React.FC = () => {
 
                                 {activeTab === 'overview' && (
                                     <>
+                                        {/* BALANCE OVERVIEW CARD */}
+                                        <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-[2.5rem] p-6 lg:p-8 text-white shadow-2xl shadow-emerald-200 border border-white/20 mb-8 relative overflow-hidden group">
+                                            <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-emerald-400/20 blur-[80px] rounded-full"></div>
+                                            <div className="absolute bottom-[-10%] left-[-5%] w-48 h-48 bg-emerald-400/20 blur-[60px] rounded-full"></div>
+                                            
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="p-2.5 bg-emerald-400/30 backdrop-blur-md text-white rounded-2xl shadow-lg border border-white/20">
+                                                        <TrendingUp size={24} strokeWidth={3} />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <h3 className="text-base lg:text-lg font-black tracking-tight">Saúde Financeira</h3>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                                                            <span className="text-sm font-black opacity-90 uppercase tracking-widest leading-none">Estável • {Math.round((stats.surplusRaw / (stats.combined.total || 1)) * 100)}% de sobra</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-sm font-black uppercase tracking-[0.2em] opacity-80">Receitas</span>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-xl lg:text-2xl font-black tracking-tighter">
+                                                                {formatCurrency(stats.combined.total)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                                                                <div className="h-full bg-white rounded-full" style={{ width: '100%' }}></div>
+                                                            </div>
+                                                            <span className="text-xs font-black uppercase tracking-widest">100%</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-sm font-black uppercase tracking-[0.2em] opacity-80">Despesas</span>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-xl lg:text-2xl font-black tracking-tighter text-emerald-100">
+                                                                {formatCurrency(stats.realExpenses.total)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                                                                <div className="h-full bg-emerald-200 rounded-full" style={{ width: `${Math.min(100, (stats.realExpenses.total / (stats.combined.total || 1)) * 100)}%` }}></div>
+                                                            </div>
+                                                            <span className="text-xs font-black uppercase tracking-widest">
+                                                                {Math.round((stats.realExpenses.total / (stats.combined.total || 1)) * 100)}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-emerald-400/20 backdrop-blur-md rounded-2xl p-4 border border-white/20 flex flex-col gap-1 shadow-inner group-hover:bg-emerald-400/30 transition-all text-emerald-950">
+                                                        <span className="text-sm font-black uppercase tracking-[0.2em] opacity-80 text-white">Sobra Real</span>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-xl lg:text-2xl font-black tracking-tighter text-white">
+                                                                {formatCurrency(stats.surplusRaw)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {/* EXPENSES BY CATEGORY CARD */}
                                         <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-6 lg:p-8 border border-white/60 shadow-xl shadow-slate-200/40 mb-8">
                                             <div className="flex items-center gap-3 mb-8">
@@ -537,8 +685,10 @@ const App: React.FC = () => {
                                                     <Users size={24} strokeWidth={3} />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <h3 className="text-xl font-black text-slate-800 tracking-tight">Despesas por Categoria</h3>
-                                                    <span className="text-sm font-black text-slate-400">Valores agrupados</span>
+                                                    <h2 className="text-base font-black text-slate-800 tracking-tight">Despesas por Categoria</h2>
+                                                    <span className="text-sm font-black text-slate-400 uppercase tracking-wide">
+                                                        Total: {formatCurrency(groupedDebts.reduce((acc, g) => acc + g.total, 0))}
+                                                    </span>
                                                 </div>
                                             </div>
 
@@ -575,12 +725,14 @@ const App: React.FC = () => {
                                         {/* CATEGORY OVERVIEW - Matching Screenshot 3 */}
                                         <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-6 lg:p-8 border border-white/60 shadow-xl shadow-slate-200/40">
                                             <div className="flex items-center gap-3 mb-8">
-                                                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                                                <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
                                                     <PiggyBank size={24} strokeWidth={3} />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <h3 className="text-xl font-black text-slate-800 tracking-tight">Visão Geral dos Gastos</h3>
-                                                    <span className="text-sm font-black text-slate-400">Para onde foi seu dinheiro</span>
+                                                    <h2 className="text-base font-black text-slate-800 tracking-tight">Categorização de Gastos</h2>
+                                                    <span className="text-sm font-black text-slate-400 uppercase tracking-wide">
+                                                        Total: {formatCurrency(stats.realExpenses.total)}
+                                                    </span>
                                                 </div>
                                             </div>
 
@@ -592,7 +744,7 @@ const App: React.FC = () => {
                                                     
                                                     const getCatStyle = (c: string) => {
                                                         if (c === 'Moradia') return { bg: 'bg-blue-50', text: 'text-blue-600', bar: 'bg-blue-500', icon: HomeIcon };
-                                                        if (c === 'Lazer') return { bg: 'bg-purple-50', text: 'text-purple-600', bar: 'bg-purple-500', icon: Palmtree };
+                                                        if (c === 'Lazer') return { bg: 'bg-emerald-50', text: 'text-emerald-600', bar: 'bg-emerald-500', icon: Palmtree };
                                                         if (c === 'Saúde') return { bg: 'bg-rose-50', text: 'text-rose-600', bar: 'bg-rose-500', icon: Heart };
                                                         if (c === 'Outros') return { bg: 'bg-slate-50', text: 'text-slate-600', bar: 'bg-slate-500', icon: Wallet };
                                                         if (c === 'Transporte') return { bg: 'bg-amber-50', text: 'text-amber-600', bar: 'bg-amber-500', icon: Car };
@@ -609,7 +761,7 @@ const App: React.FC = () => {
                                                                 <Icon size={24} strokeWidth={2.5} />
                                                             </div>
                                                             <div className="flex-1 flex flex-col gap-0.5 overflow-hidden">
-                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{cat}</span>
+                                                                <span className="text-sm font-black text-slate-400 uppercase tracking-widest truncate">{cat}</span>
                                                                 <span className="text-base font-black text-slate-800 tracking-tight truncate">
                                                                     {formatCurrency(amount)}
                                                                 </span>
@@ -622,7 +774,7 @@ const App: React.FC = () => {
                                                                     <circle cx="20" cy="20" r="17" fill="transparent" stroke="currentColor" strokeWidth="4" className="text-slate-100" />
                                                                     <circle cx="20" cy="20" r="17" fill="transparent" stroke="currentColor" strokeWidth="4" strokeDasharray={106.8} strokeDashoffset={106.8 - (106.8 * percent) / 100} className={s.text} strokeLinecap="round" />
                                                                 </svg>
-                                                                <span className="absolute text-[8px] font-black text-slate-600">{percent}%</span>
+                                                                <span className="absolute text-xs font-black text-slate-600">{percent}%</span>
                                                             </div>
                                                         </div>
                                                     );
@@ -637,32 +789,32 @@ const App: React.FC = () => {
                                                     <TrendingUp size={160} />
                                                 </div>
                                                 <div className="relative z-10 flex flex-col flex-1 h-full">
-                                                    <h3 className="text-xl lg:text-2xl font-black mb-6 lg:mb-8 tracking-tight">Visão Geral do Mês</h3>
+                                                    <h3 className="text-base lg:text-lg font-black mb-6 lg:mb-8 tracking-tight">Análise Mensal</h3>
                                                     <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end flex-1">
                                                         <div className="flex flex-col gap-4 flex-1 w-full">
                                                             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
                                                                 <div className="flex justify-between items-center mb-1">
-                                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Receitas</span>
+                                                                    <span className="text-sm font-black uppercase tracking-widest opacity-60">Receitas</span>
                                                                     {!checkIn.isDone && (
                                                                         <button
                                                                             onClick={handleCheckIn}
-                                                                            className="text-[10px] bg-white text-emerald-600 px-2 py-0.5 rounded font-black uppercase tracking-widest hover:bg-emerald-50 transition-colors"
+                                                                            className="text-sm bg-white text-emerald-600 px-2 py-0.5 rounded font-black uppercase tracking-widest hover:bg-emerald-50 transition-colors"
                                                                         >
                                                                             Check-in
                                                                         </button>
                                                                     )}
                                                                 </div>
                                                                 <div className="flex items-center justify-between gap-2 overflow-hidden">
-                                                                    <span className="text-xl font-black truncate">{formatCurrency(stats.combined.total)}</span>
+                                                                    <span className="text-lg font-black truncate">{formatCurrency(stats.combined.total)}</span>
                                                                     <div className="flex gap-1 items-end h-8 shrink-0">
                                                                         {[30, 50, 40, 70, 60].map((h, i) => <div key={i} className="w-1.5 bg-emerald-400 rounded-full" style={{ height: `${h}%` }}></div>)}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-1">Despesas</span>
+                                                                <span className="text-sm font-black uppercase tracking-widest opacity-60 block mb-1">Despesas</span>
                                                                 <div className="flex items-center justify-between gap-2 overflow-hidden">
-                                                                    <span className="text-xl font-black truncate">{formatCurrency(stats.realExpenses.total)}</span>
+                                                                    <span className="text-lg font-black truncate">{formatCurrency(stats.realExpenses.total)}</span>
                                                                     <div className="flex gap-1 items-end h-8 shrink-0">
                                                                         {[60, 40, 80, 50, 70].map((h, i) => <div key={i} className="w-1.5 bg-rose-400 rounded-full" style={{ height: `${h}%` }}></div>)}
                                                                     </div>
@@ -676,7 +828,7 @@ const App: React.FC = () => {
                                                             </svg>
                                                             <div className="absolute flex flex-col items-center">
                                                                 <span className="text-base lg:text-lg font-black">95%</span>
-                                                                <span className="text-[9px] font-black opacity-60 uppercase">Total</span>
+                                                                <span className="text-xs font-black opacity-60 uppercase">Total</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -688,13 +840,13 @@ const App: React.FC = () => {
                                                     <div className="absolute bottom-0 right-0 p-4 opacity-20">
                                                         <TrendingUp size={60} />
                                                     </div>
-                                                    <h3 className="text-base lg:text-lg font-black mb-3 lg:mb-4 tracking-tight">Resumo de Receitas</h3>
+                                                    <h3 className="text-base lg:text-lg font-black mb-3 lg:mb-4 tracking-tight">Fluxo de Receitas</h3>
                                                     <div className="flex items-end justify-between gap-2 overflow-hidden">
                                                         <div className="flex flex-col overflow-hidden">
                                                             <span className="text-2xl lg:text-3xl font-black tracking-tighter truncate">
                                                                 {formatCurrency(stats.combined.total)}
                                                             </span>
-                                                            <span className="text-[10px] font-bold opacity-80 mt-0.5">Tendência positiva</span>
+                                                            <span className="text-sm font-bold opacity-80 mt-0.5">Tendência positiva</span>
                                                         </div>
                                                         <div className="w-24 lg:w-32 h-12 lg:h-16 relative shrink-0">
                                                             <svg viewBox="0 0 100 40" className="w-full h-full">
@@ -710,46 +862,19 @@ const App: React.FC = () => {
                                                     <div className="absolute top-0 right-0 p-4 opacity-20">
                                                         <Wallet size={60} />
                                                     </div>
-                                                    <h3 className="text-base lg:text-lg font-black mb-2 tracking-tight">Gerenciamento de Contas</h3>
+                                                    <h3 className="text-base lg:text-lg font-black mb-2 tracking-tight">Gestão de Contas</h3>
                                                     <span className="text-xl lg:text-2xl font-black tracking-tighter block mb-1 truncate">
                                                         {formatCurrency(balance)}
                                                     </span>
                                                     <div className="flex justify-between items-center mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-white/20">
-                                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Cartões Ativos: 2</span>
-                                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Sincronizado</span>
+                                                        <span className="text-xs font-black uppercase tracking-widest opacity-80">Cartões Ativos: 2</span>
+                                                        <span className="text-xs font-black uppercase tracking-widest opacity-80">Sincronizado</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* DISTRIBUTION LIST - Matching Screenshot 2 style */}
-                                        <div className="flex flex-col gap-4">
-                                            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 pl-4">Distribuição de Sobras (Planejamento)</h3>
-                                            <div className="flex flex-col gap-4">
-                                                {monthData.expenses.filter(e => e.isDistribution).map(alloc => (
-                                                    <div key={alloc.id} className="bg-orange-50/50 border border-orange-100/50 rounded-3xl p-6 flex items-center justify-between group hover:bg-orange-50 transition-all">
-                                                        <div className="flex items-center gap-5">
-                                                            <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-orange-600">
-                                                                <div className="w-6 h-6 rounded-full border-2 border-slate-200"></div>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-base font-black text-slate-800 uppercase tracking-tight">{alloc.description}</span>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <ShoppingCart size={14} className="text-orange-500" />
-                                                                    <span className="text-xs font-black text-orange-600 uppercase tracking-widest">{alloc.category}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="text-2xl font-black text-slate-900 tracking-tight">
-                                                                {formatCurrency(alloc.amount)}
-                                                            </span>
-                                                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">vence dia 05</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
+
                                     </>
                                 )}
                             </motion.div>
@@ -789,95 +914,7 @@ const App: React.FC = () => {
                             </motion.div>
                         )}
 
-                        {view === 'goals' && (
-                            <motion.div 
-                                key="goals"
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 1.05 }}
-                                transition={{ duration: 0.5 }}
-                                className="max-w-4xl mx-auto flex flex-col gap-5"
-                            >
-                                <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-[2rem] p-8 text-white shadow-xl shadow-indigo-600/30 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-8 opacity-10">
-                                        <Target size={120} />
-                                    </div>
-                                    <div className="relative z-10">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
-                                                <Target size={28} strokeWidth={3} />
-                                            </div>
-                                            <h3 className="text-2xl font-black tracking-tight">Distribuição de Sobras</h3>
-                                        </div>
-                                        <p className="text-indigo-100 text-sm font-bold leading-relaxed max-w-[80%]">
-                                            Visualize o progresso dos seus objetivos. Cada centavo economizado é um passo em direção aos seus sonhos.
-                                        </p>
-                                    </div>
-                                </div>
 
-                                {monthData.goals.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                                        <Target size={48} className="mb-4 opacity-20" />
-                                        <span className="font-black text-sm">Sem metas este mês.</span>
-                                        {currentYear === 2026 && currentMonth < 3 && <span className="text-xs font-bold opacity-60 mt-2 bg-slate-100 px-3 py-1 rounded-full">Disponível a partir de Março/2026</span>}
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col gap-4">
-                                        {monthData.goals.map(goal => {
-                                            const totalDistributed = monthData.goals.reduce((acc, g) => acc + g.amount, 0);
-                                            const sharePercentage = totalDistributed > 0 ? Math.round((goal.amount / totalDistributed) * 100) : 0;
-                                            const linkedTransaction = monthData.expenses.find(t => t.id === goal.linkedTransactionId);
-                                            const isPaid = linkedTransaction?.paid || false;
-                                            const currentAmount = isPaid ? goal.amount : 0;
-                                            const percentage = (currentAmount / goal.amount) * 100;
-                                            
-                                            const getConfig = (cat: string) => {
-                                                if (cat.includes('Lazer') || goal.name?.includes('Viagem')) return { bg: 'bg-sky-50', border: 'border-sky-100', text: 'text-sky-600', bar: 'bg-sky-500', icon: Plane };
-                                                if (cat.includes('Investimento')) return { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-600', bar: 'bg-emerald-500', icon: PiggyBank };
-                                                if (cat.includes('Alimentação') || goal.name?.includes('Casa')) return { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-600', bar: 'bg-amber-500', icon: ShoppingBag };
-                                                return { bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-600', bar: 'bg-purple-500', icon: Wallet };
-                                            };
-
-                                            const s = getConfig(goal.category);
-                                            const Icon = s.icon;
-
-                                            return (
-                                                <div key={goal.id} className={`relative p-5 rounded-[1.5rem] bg-white border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] flex flex-col gap-4 transition-all hover:scale-[1.01]`}>
-                                                    <div className="flex justify-between items-start">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${s.bg} ${s.text}`}>
-                                                                <Icon size={22} strokeWidth={3} />
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-black text-slate-800 text-base">{goal.name}</span>
-                                                                <span className="text-sm font-black uppercase tracking-wider text-slate-400">{isPaid ? 'Alocado' : 'Pendente'}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className={`px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-100`}>
-                                                            <span className="text-sm font-black text-slate-700">{sharePercentage}%</span>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="flex flex-col gap-2">
-                                                        <div className="flex justify-between items-end">
-                                                            <span className={`text-3xl font-black ${isPaid ? s.text : 'text-slate-300'}`}>
-                                                                {formatCurrency(currentAmount)}
-                                                            </span>
-                                                            <span className="text-sm font-black text-slate-400">
-                                                                Meta: {formatCurrency(goal.amount)}
-                                                            </span>
-                                                        </div>
-                                                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                            <div className={`h-full rounded-full transition-all duration-1000 ease-out ${s.bar} shadow-glow`} style={{ width: `${percentage}%` }}></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </motion.div>
-                        )}
                     </AnimatePresence>
                 </main>
 

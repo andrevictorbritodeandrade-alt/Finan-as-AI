@@ -34,7 +34,7 @@ const FinancialHealthWidget: React.FC<FinancialHealthWidgetProps> = ({ income, e
     } else if (score >= 700) {
         status = { text: 'ALTA SOLIDEZ', color: 'text-cyan-400', icon: ShieldCheck, gradient: 'from-cyan-400 to-blue-400' };
     } else if (score >= 500) {
-        status = { text: 'EQUILÍBRIO', color: 'text-indigo-400', icon: TrendingUp, gradient: 'from-indigo-400 to-violet-400' };
+        status = { text: 'EQUILÍBRIO', color: 'text-emerald-500', icon: TrendingUp, gradient: 'from-emerald-500 to-teal-400' };
     } else if (score >= 300) {
         status = { text: 'ATENÇÃO', color: 'text-amber-400', icon: Activity, gradient: 'from-amber-400 to-orange-400' };
     } else {
@@ -62,14 +62,14 @@ const FinancialHealthWidget: React.FC<FinancialHealthWidgetProps> = ({ income, e
                         <div className={`p-1.5 rounded-lg bg-white/5 border border-white/10 ${status.color}`}>
                             <Icon size={14} strokeWidth={3} />
                         </div>
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 truncate">FinScore AI</span>
+                        <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 truncate">FinScore AI</span>
                     </div>
                     
                     <h3 className={`text-xl sm:text-2xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r ${status.gradient} drop-shadow-sm truncate`}>
                         {status.text}
                     </h3>
                     
-                    <p className="text-[10px] sm:text-xs font-bold text-slate-400 leading-relaxed mt-1 max-w-[200px]">
+                    <p className="text-sm sm:text-xs font-bold text-slate-400 leading-relaxed mt-1 max-w-[200px]">
                         {score >= 700 
                             ? "Aporte acima da média. Potencial alto."
                             : score >= 500 
@@ -111,7 +111,7 @@ const FinancialHealthWidget: React.FC<FinancialHealthWidgetProps> = ({ income, e
                     
                     {/* Center Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-[9px] font-black uppercase text-slate-500">Score</span>
+                        <span className="text-xs font-black uppercase text-slate-500">Score</span>
                         <span className={`text-2xl font-black tracking-tighter ${status.color}`}>
                             {score}
                         </span>
@@ -122,14 +122,14 @@ const FinancialHealthWidget: React.FC<FinancialHealthWidgetProps> = ({ income, e
             {/* Bottom Bar: Stats */}
             <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Margem</span>
+                    <span className="text-sm font-black uppercase text-slate-500 tracking-wider">Margem</span>
                     <span className={`text-xs font-black ${surplus >= 0 ? 'text-white' : 'text-rose-400'}`}>
                         {surplus >= 0 ? '+' : ''}{Math.round(savingsRate)}%
                     </span>
                 </div>
                 <div className="h-4 w-px bg-white/10 mx-2"></div>
                 <div className="flex flex-col text-right">
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Poder</span>
+                    <span className="text-sm font-black uppercase text-slate-500 tracking-wider">Poder</span>
                     <span className="text-xs font-black text-white">
                         {formatCurrency(surplus, true)}
                     </span>

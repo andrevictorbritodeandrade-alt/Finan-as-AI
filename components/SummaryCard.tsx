@@ -36,19 +36,19 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, subtitle, type,
             icon: TrendingDown
         };
         if (type === 'final') return { 
-            bg: 'bg-gradient-to-br from-violet-600 to-indigo-600', 
-            shadow: 'shadow-indigo-500/20',
+            bg: 'bg-gradient-to-br from-emerald-600 to-teal-700', 
+            shadow: 'shadow-emerald-500/20',
             iconBg: 'bg-white/20', iconColor: 'text-white',
-            text: 'text-white', subText: 'text-indigo-100',
+            text: 'text-white', subText: 'text-emerald-100',
             barBg: 'bg-black/20', barFill: 'bg-white',
             icon: Calculator
         };
         // Info
         return { 
-            bg: 'bg-gradient-to-br from-blue-500 to-cyan-400', 
-            shadow: 'shadow-blue-500/20',
+            bg: 'bg-gradient-to-br from-teal-500 to-emerald-400', 
+            shadow: 'shadow-teal-500/20',
             iconBg: 'bg-white/20', iconColor: 'text-white',
-            text: 'text-white', subText: 'text-blue-50',
+            text: 'text-white', subText: 'text-teal-50',
             barBg: 'bg-black/10', barFill: 'bg-white',
             icon: Wallet
         };

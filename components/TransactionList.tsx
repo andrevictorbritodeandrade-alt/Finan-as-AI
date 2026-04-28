@@ -40,11 +40,11 @@ const getCategoryColor = (category: string) => {
     switch (category) {
         case 'Salário': return 'bg-emerald-100/40 text-emerald-700 border-emerald-100';
         case 'Mumbuca': return 'bg-rose-100/40 text-rose-700 border-rose-100';
-        case 'Moradia': return 'bg-teal-50 text-teal-700 border-teal-100'; // Cor levemente verde
+        case 'Moradia': return 'bg-emerald-50 text-emerald-700 border-emerald-100'; // Cor levemente verde
         case 'Alimentação': return 'bg-orange-100/40 text-orange-700 border-orange-100';
-        case 'Lazer': return 'bg-purple-100/40 text-purple-700 border-purple-100';
+        case 'Lazer': return 'bg-teal-100/40 text-teal-700 border-teal-100';
         case 'Investimento': return 'bg-amber-100/40 text-amber-700 border-amber-100';
-        case 'Educação': return 'bg-indigo-100/40 text-indigo-700 border-indigo-100';
+        case 'Educação': return 'bg-emerald-100/40 text-emerald-700 border-emerald-100';
         case 'Saúde': return 'bg-red-100/40 text-red-700 border-red-100';
         case 'Transporte': return 'bg-cyan-100/40 text-cyan-700 border-cyan-100';
         case 'Dívidas': return 'bg-slate-100/60 text-slate-700 border-slate-200';
@@ -54,12 +54,12 @@ const getCategoryColor = (category: string) => {
 
 const getCardBgColor = (category: string) => {
     switch (category) {
-        case 'Moradia': return 'bg-teal-50/70 border-teal-100/50'; // Verde leve solicitado
+        case 'Moradia': return 'bg-emerald-50/70 border-emerald-100/50'; // Verde leve solicitado
         case 'Alimentação': return 'bg-orange-50/70 border-orange-100/50';
         case 'Saúde': return 'bg-rose-50/70 border-rose-100/50';
         case 'Educacao':
-        case 'Educação': return 'bg-indigo-50/70 border-indigo-100/50';
-        case 'Lazer': return 'bg-purple-50/70 border-purple-100/50';
+        case 'Educação': return 'bg-emerald-50/70 border-emerald-100/50';
+        case 'Lazer': return 'bg-teal-50/70 border-teal-100/50';
         case 'Transporte': return 'bg-cyan-50/70 border-cyan-100/50';
         case 'Dívidas': return 'bg-slate-100/50 border-slate-200/50';
         case 'Investimento': return 'bg-amber-50/70 border-amber-100/50';
@@ -133,7 +133,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onToggl
     const getHeaderStyle = (key: string) => {
         if (key.includes('Distribuição')) return 'text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-700';
         if (key === 'MORADIA') return 'text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-emerald-700';
-        if (key === 'MARCIA BRITO') return 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-700';
+        if (key === 'MARCIA BRITO') return 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-700';
         if (key === 'MARCIA BISPO') return 'text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-red-700';
         if (key === 'LILI TORRES') return 'text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-700';
         if (key === 'REBECCA BRITO') return 'text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-pink-700';
@@ -252,7 +252,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onToggl
                                             </div>
                                             
                                             {item.installments && (
-                                                <div className="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center gap-1.5 shadow-sm">
+                                                <div className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1.5 shadow-sm">
                                                     <span className="text-xs font-black tracking-widest uppercase opacity-70">Parc.</span>
                                                     <span className="text-sm font-black">{item.installments.current}/{item.installments.total}</span>
                                                 </div>

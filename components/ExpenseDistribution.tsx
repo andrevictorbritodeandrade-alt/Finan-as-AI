@@ -37,8 +37,8 @@ const getCategoryColor = (category: string) => {
         case 'Alimentação': return 'bg-orange-500 text-orange-100';
         case 'Transporte': return 'bg-zinc-500 text-zinc-100';
         case 'Saúde': return 'bg-rose-500 text-rose-100';
-        case 'Educação': return 'bg-indigo-500 text-indigo-100';
-        case 'Lazer': return 'bg-purple-500 text-purple-100';
+        case 'Educação': return 'bg-emerald-500 text-emerald-100';
+        case 'Lazer': return 'bg-teal-500 text-teal-100';
         case 'Dívidas': return 'bg-red-600 text-red-100';
         case 'Investimento': return 'bg-emerald-500 text-emerald-100';
         default: return 'bg-slate-500 text-slate-100';
@@ -74,12 +74,12 @@ const ExpenseDistribution: React.FC<ExpenseDistributionProps> = ({ expenses }) =
     return (
         <div className="w-full bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 border border-slate-100">
             <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-indigo-50 rounded-xl text-indigo-600">
+                <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600">
                     <PieChart size={20} strokeWidth={3} />
                 </div>
                 <div>
                     <h3 className="text-lg font-black text-slate-800 leading-none">Distribuição de Gastos</h3>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Onde seu dinheiro está indo</span>
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Onde seu dinheiro está indo</span>
                 </div>
             </div>
 
@@ -95,7 +95,7 @@ const ExpenseDistribution: React.FC<ExpenseDistributionProps> = ({ expenses }) =
                             </div>
                             <div className="text-right">
                                 <span className="text-xs font-black text-slate-900 mr-2">{format(item.amount)}</span>
-                                <span className="text-[10px] font-bold text-slate-400">{Math.round(item.percent)}%</span>
+                                <span className="text-sm font-bold text-slate-400">{Math.round(item.percent)}%</span>
                             </div>
                         </div>
                         

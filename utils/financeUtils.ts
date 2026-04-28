@@ -85,7 +85,7 @@ export const generateMonthData = (year: number, month: number): MonthData => {
     const paidInMar2026 = ["ALUGUEL", "APPAI", "FATURA DO CARTÃO DO ANDRÉ ITAÚ", "CELULAR DA MARCELLY", "LILI TORRES", "JADY"];
     
     // List of items paid in Apr 2026
-    const paidInApr2026 = ["ALUGUEL", "APPAI DO ANDRÉ", "INTERNET DA CASA", "INTERMÉDICA DO ANDRÉ", "SEGURO DO CARRO", "GUARDA ROUPAS", "FACULDADE", "PASSAGENS AÉREAS", "ESTADIA", "PASSAGENS ONIBUS", "MALA DO ANDRÉ", "RENEGOCIAR CARREFOUR", "EMPRÉSTIMO", "CARTÃO DO ITAÚ DA MARCELLY", "CLARO DA MARCELLY"];
+    const paidInApr2026 = ["ALUGUEL", "APPAI DO ANDRÉ", "INTERNET DA CASA", "INTERMÉDICA DO ANDRÉ", "SEGURO DO CARRO", "GUARDA ROUPAS", "FACULDADE", "PASSAGENS AÉREAS", "ESTADIA", "PASSAGENS ONIBUS", "MALA DO ANDRÉ", "RENEGOCIAR CARREFOUR", "EMPRÉSTIMO", "CARTÃO DO ITAÚ DA MARCELLY", "CLARO DA MARCELLY", "MÃO DE OBRA"];
 
     // 1. RECURRING/FIXED EXPENSES
     const cyclicalConfig = [
@@ -94,12 +94,11 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         { description: "APPAI DA MARCELLY", amount: 110.00, category: "Saúde", day: 23, group: 'MARCIA BISPO' },
         { description: "APPAI DO ANDRÉ", amount: 129.50, category: "Saúde", day: 12, group: 'MARCIA BRITO' },
         { description: "CARTÃO DO ITAÚ DA MARCELLY", amount: 200.00, category: "Moradia", day: 24, group: 'MORADIA' },
-        { description: "REFORMA DO SOFÁ DE CAXIAS", amount: 34.90, category: "Moradia", day: 12, group: 'MARCIA BRITO' },
         { description: "INTERNET DA CASA", amount: 125.00, category: "Moradia", day: 18, group: 'MORADIA' },
         { description: "INTERMÉDICA DO ANDRÉ", amount: 123.00, category: "Saúde", day: 12, group: 'MARCIA BRITO' },
         { description: "CONTA DA CLARO ANDRÉ", amount: 75.00, category: "Moradia", day: 5, group: 'MORADIA' },
         { description: "CONTA DA VIVO ANDRÉ", amount: 110.00, category: "Moradia", day: 5, group: 'MORADIA' },
-        { description: "SEGURO DO CARRO", amount: 143.00, category: "Transporte", day: 12, group: 'MARCIA BRITO' },
+        { description: "SEGURO DO CARRO", amount: 143.00, category: "Moradia", day: 12, group: 'MORADIA' },
         { description: "CONTA DA VIVO MARCELLY", amount: 66.60, category: "Moradia", day: 23, group: 'MORADIA' },
         { description: "CONTA DA CLARO DA MARCELLY", amount: 34.90, category: "Moradia", day: 5, group: 'MORADIA' }
     ];
@@ -150,24 +149,24 @@ export const generateMonthData = (year: number, month: number): MonthData => {
     // 2. INSTALLMENT EXPENSES
     const finiteConfig = [
         { desc: "GUARDA ROUPAS", totalAmount: 914.48, cat: "Moradia", day: 12, installments: 5, sY: 2026, sM: 2, group: 'MARCIA BRITO' },
-        { desc: "CELULAR DA MARCELLY", totalAmount: 4628.88, cat: "Outros", day: 10, installments: 12, sY: 2026, sM: 2, group: 'MARCIA BISPO' },
+        { desc: "CELULAR DA MARCELLY", totalAmount: 4628.88, cat: "Outros", day: 10, installments: 12, sY: 2026, sM: 3, group: 'MARCIA BISPO' },
+        { desc: "REFORMA DO SOFÁ DE CAXIAS", totalAmount: 575.00, cat: "Moradia", day: 12, installments: 5, sY: 2026, sM: 4, group: 'MARCIA BRITO' },
         { desc: "CONSERTO DO CARRO DE OUTUBRO", totalAmount: 1447.00, cat: "Transporte", day: 12, installments: 4, sY: 2025, sM: 11, group: 'MARCIA BRITO' },
         { desc: "FACULDADE DA MARCELLY", totalAmount: 2026.80, cat: "Educação", day: 12, installments: 10, sY: 2025, sM: 12, group: 'MARCIA BRITO' },
-        { desc: "PASSAGENS AÉREAS JOBURG X CAPE TOWN", totalAmount: 1560.00, cat: "Lazer", day: 12, installments: 5, sY: 2026, sM: 2, group: 'MARCIA BRITO' },
+        { desc: "PASSAGENS AÉREAS JOBURG X CAPE TOWN", totalAmount: 1560.00, cat: "Lazer", day: 12, installments: 5, sY: 2026, sM: 3, group: 'MARCIA BRITO' },
         { desc: "PASSAGENS DE ONIBUS RIO x SP", totalAmount: 438.00, cat: "Transporte", day: 12, installments: 5, sY: 2026, sM: 3, group: 'MARCIA BRITO' },
         { desc: "MALA DO ANDRÉ", totalAmount: 179.00, cat: "Lazer", day: 12, installments: 3, sY: 2026, sM: 3, group: 'MARCIA BRITO' },
         { desc: "RENEGOCIAR CARREFOUR", totalAmount: 5000.00, cat: "Dívidas", day: 12, installments: 16, sY: 2025, sM: 12, group: 'MARCIA BRITO' },
-        { desc: "EMPRÉSTIMO COM MARCIA BISPO", totalAmount: 1100.00, cat: "Dívidas", day: 15, installments: 4, sY: 2026, sM: 4, group: 'MARCIA BISPO' },
-
-        { desc: "EMPRÉSTIMO COM LILI", totalAmount: 3429.60, cat: "Dívidas", day: 4, installments: 6, sY: 2026, sM: 4, group: 'LILI TORRES' },
+        { desc: "EMPRÉSTIMO COM MARCIA BISPO", totalAmount: 1100.00, cat: "Dívidas", day: 15, installments: 4, sY: 2026, sM: 5, group: 'MARCIA BISPO' },
+        { desc: "EMPRÉSTIMO COM LILI", totalAmount: 4000.00, cat: "Dívidas", day: 4, installments: 5, sY: 2026, sM: 4, group: 'LILI TORRES' },
         { desc: "ESTADIA EM JOHANESBURGO", totalAmount: 1363.93, cat: "Lazer", day: 4, installments: 5, sY: 2026, sM: 2, group: 'LILI TORRES' },
         { desc: "ESTADIA EM CIDADE DO CABO", totalAmount: 1197.00, cat: "Lazer", day: 4, installments: 5, sY: 2026, sM: 2, group: 'LILI TORRES' },
         { desc: "ESTADIA DE VOLTA EM SAO PAULO", totalAmount: 358.20, cat: "Lazer", day: 4, installments: 4, sY: 2026, sM: 2, group: 'LILI TORRES' },
         { desc: "ESTADIA DE IDA EM SAO PAULO", totalAmount: 289.44, cat: "Lazer", day: 4, installments: 4, sY: 2026, sM: 2, group: 'LILI TORRES' },
         { desc: "PASSAGENS AÉREAS SP X JOBURG", totalAmount: 4038.96, cat: "Lazer", day: 4, installments: 8, sY: 2025, sM: 12, group: 'LILI TORRES' },
         { desc: "CIDADANIA PORTUGUESA", totalAmount: 5180.00, cat: "Dívidas", day: 12, installments: 37, sY: 2024, sM: 11, group: 'REBECCA BRITO' },
-        { desc: "PASSEIO DE SAFARI", totalAmount: 800.00, cat: "Lazer", day: 10, installments: 5, sY: 2026, sM: 3, group: 'JADY' },
-        { desc: "EMPRÉSTIMO JADY", totalAmount: 800.00, cat: "Dívidas", day: 10, installments: 5, sY: 2026, sM: 3, group: 'JADY' }
+        { desc: "PASSEIO DE SAFARI", totalAmount: 3429.60, cat: "Lazer", day: 10, installments: 6, sY: 2026, sM: 3, group: 'JADY' },
+        { desc: "MÃO DE OBRA DO DAVI", totalAmount: 372.82, cat: "Moradia", day: 12, installments: 3, sY: 2026, sM: 5, group: 'MARCIA BRITO' }
     ];
 
     finiteConfig.forEach(f => {
@@ -198,55 +197,6 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         }
     });
 
-    const newGoals: Goal[] = [];
-
-    // --- ALGORITMO DE DISTRIBUIÇÃO DE SOBRAS (A PARTIR DE MARÇO 2026) ---
-    if (year === 2026 && month >= 3) {
-        const salaryOnly = newIncomes.filter(i => i.category === 'Salário').reduce((acc,i) => acc + i.amount, 0);
-        const mumbucaOnly = newIncomes.filter(i => i.category === 'Mumbuca').reduce((acc,i) => acc + i.amount, 0);
-        const totalCommitted = newExpenses.reduce((acc, e) => acc + e.amount, 0);
-        
-        const projectedSurplus = (salaryOnly + mumbucaOnly) - totalCommitted;
-
-        if (projectedSurplus > 100) {
-            const isMay2026 = (year === 2026 && month === 5);
-            const valCompras = isMay2026 ? 0 : projectedSurplus * 0.30;
-            const valViagem = isMay2026 ? 0 : projectedSurplus * 0.30;
-            const valPoupanca = isMay2026 ? 0 : projectedSurplus * 0.20;
-            const valDiaDia = isMay2026 ? 0 : projectedSurplus * 0.20;
-
-            const allocations = [
-                { id: `alloc_compras_${year}_${month}`, desc: '🛒 COMPRAS DO MÊS (CASA)', amt: valCompras, cat: 'Alimentação' },
-                { id: `alloc_viagem_${year}_${month}`, desc: '✈️ FUNDO VIAGEM (PASSAGEM/USO)', amt: valViagem, cat: 'Lazer' },
-                { id: `alloc_poupanca_${year}_${month}`, desc: '📈 RESERVA DE POUPANÇA', amt: valPoupanca, cat: 'Investimento' },
-                { id: `alloc_diadia_${year}_${month}`, desc: '💵 GIRO DO DIA A DIA (LIVRE)', amt: valDiaDia, cat: 'Outros' }
-            ];
-
-            allocations.forEach(alloc => {
-                // Add Expense Transaction
-                newExpenses.push({
-                    id: alloc.id,
-                    description: alloc.desc,
-                    amount: parseFloat(alloc.amt.toFixed(2)),
-                    category: alloc.cat,
-                    paid: false,
-                    date: `${year}-${month.toString().padStart(2,'0')}-05`,
-                    group: 'Distribuição de Sobras (Planejamento)',
-                    isDistribution: true // Flag to identify and exclude from Sobras calculation
-                });
-
-                // Add corresponding Goal
-                newGoals.push({
-                    id: `goal_${alloc.id}`,
-                    name: alloc.desc,
-                    amount: parseFloat(alloc.amt.toFixed(2)),
-                    category: alloc.cat,
-                    linkedTransactionId: alloc.id
-                });
-            });
-        }
-    }
-
     const newAvulsosItems: Transaction[] = [];
     if (year === 2026 && month === 4) {
         newAvulsosItems.push(
@@ -266,7 +216,7 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         expenses: newExpenses,
         shoppingItems: [],
         avulsosItems: newAvulsosItems,
-        goals: newGoals, // Use the dynamically generated goals
+        goals: [], // Goals removed as requested
         bankAccounts: INITIAL_ACCOUNTS,
         updatedAt: Date.now()
     };
