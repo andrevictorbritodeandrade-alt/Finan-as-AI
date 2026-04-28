@@ -251,6 +251,12 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onToggl
                                                 <span>{item.category}</span>
                                             </div>
                                             
+                                            {item.dueDate && (
+                                                <div className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1.5 shadow-sm">
+                                                    <span className="text-xs font-black tracking-widest uppercase opacity-70">Dia</span>
+                                                    <span className="text-sm font-black">{item.dueDate.split('-')[2]}</span>
+                                                </div>
+                                            )}
                                             {item.installments && (
                                                 <div className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1.5 shadow-sm">
                                                     <span className="text-xs font-black tracking-widest uppercase opacity-70">Parc.</span>

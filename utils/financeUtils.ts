@@ -59,8 +59,8 @@ export const generateMonthData = (year: number, month: number): MonthData => {
     const newIncomes: Transaction[] = [
         { id: `inc_m_${year}_${month}`, description: `SALARIO MARCELLY`, amount: 3436.22, paid: isJan2026 || isApr2026OrMay2026, date: salaryDate, category: 'Salário' },
         { id: `inc_a_${year}_${month}`, description: `SALARIO ANDRE`, amount: 3436.22, paid: isJan2026 || isApr2026OrMay2026, date: salaryDate, category: 'Salário' },
-        { id: `inc_mum_m_${year}_${month}`, description: 'MUMBUCA MARCELLY', amount: 598.00, paid: isJan2026 || isApr2026, date: mumbucaDate, category: 'Mumbuca' },
-        { id: `inc_mum_a_${year}_${month}`, description: 'MUMBUCA ANDRE', amount: 598.00, paid: isJan2026 || isApr2026, date: mumbucaDate, category: 'Mumbuca' }
+        { id: `inc_mum_m_${year}_${month}`, description: 'MUMBUCA MARCELLY', amount: 598.00, paid: isJan2026, date: mumbucaDate, category: 'Mumbuca' },
+        { id: `inc_mum_a_${year}_${month}`, description: 'MUMBUCA ANDRE', amount: 598.00, paid: isJan2026, date: mumbucaDate, category: 'Mumbuca' }
     ];
 
     // --- 13º SALÁRIO LOGIC ---
@@ -172,8 +172,8 @@ export const generateMonthData = (year: number, month: number): MonthData => {
         { desc: "MÃO DE OBRA DO DAVI", totalAmount: 372.82, cat: "Moradia", day: 12, installments: 3, sY: 2026, sM: 5, group: 'MARCIA BRITO' },
         { desc: "KR AUTOPEÇAS", totalAmount: 291.00, cat: "Transporte", day: 12, installments: 7, sY: 2026, sM: 5, group: 'MARCIA BRITO' },
         { desc: "FILHÃO AUTOPEÇAS", totalAmount: 120.00, cat: "Transporte", day: 12, installments: 3, sY: 2026, sM: 5, group: 'MARCIA BRITO' },
-        { desc: "CABESOM", totalAmount: 179.00, cat: "Outros", day: 12, installments: 2, sY: 2026, sM: 5, group: 'MARCIA BRITO' },
-        { desc: "REMÉDIOS (MARCIA BRITO)", totalAmount: 246.09, cat: "Saúde", day: 12, installments: 3, sY: 2026, sM: 5, group: 'MARCIA BRITO' }
+        { desc: "CABESOM", totalAmount: 179.00, cat: "Outros", day: 28, installments: 2, sY: 2026, sM: 5, group: 'MARCIA BRITO' },
+        { desc: "REMÉDIOS (MARCIA BRITO)", totalAmount: 246.09, cat: "Saúde", day: 28, installments: 3, sY: 2026, sM: 5, group: 'MARCIA BRITO' }
     ];
 
     finiteConfig.forEach(f => {

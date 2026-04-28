@@ -50,13 +50,13 @@ const App: React.FC = () => {
         localStorage.setItem(`checkin_${currentYear}_${currentMonth}`, JSON.stringify(newState));
     };
 
-    // Force refresh to pull updated categories and grouping (v11)
+    // Force refresh to pull updated categories and grouping (v13)
     useEffect(() => {
-        const forceUpdateV11 = localStorage.getItem('force_update_v11_salary_mumbuca_fixed');
-        if (!forceUpdateV11) {
+        const forceUpdateV13 = localStorage.getItem('force_update_v13_due_dates_marcia_brito_fixed');
+        if (!forceUpdateV13) {
             localStorage.removeItem('financeData_2026_4');
             localStorage.removeItem('financeData_2026_5');
-            localStorage.setItem('force_update_v11_salary_mumbuca_fixed', 'true');
+            localStorage.setItem('force_update_v13_due_dates_marcia_brito_fixed', 'true');
             window.location.reload();
         }
     }, []);
