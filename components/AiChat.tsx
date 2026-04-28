@@ -75,7 +75,7 @@ const AiChat: React.FC<AiChatProps> = ({ isOpen, onClose, currentMonthData, proj
                         <div className="p-2.5 bg-teal-50 rounded-xl text-teal-600">
                             <Bot size={24} strokeWidth={2.5} />
                         </div>
-                        <h2 className="font-extrabold text-xl text-gray-900">IA Financeira</h2>
+                        <h2 className="font-black text-xl text-gray-900">IA Financeira</h2>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
                         <X size={24} strokeWidth={2.5} />

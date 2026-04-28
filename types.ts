@@ -16,6 +16,7 @@ export interface Transaction {
   dueDate?: string;
   installments?: InstallmentInfo;
   group?: string; // New field for grouping (Fixed vs Variable)
+  paidAt?: string;
   isDistribution?: boolean; // Flag to identify surplus allocation items
   isSuspended?: boolean; // New field to suspend a transaction
   suspendedUntil?: string; // Month to resume (e.g. "2026-06")

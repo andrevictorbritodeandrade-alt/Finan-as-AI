@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Wallet, Calculator } from 'lucide-react';
+import { formatCurrency } from '../utils/financeUtils';
 
 interface SummaryCardProps {
     title: string;
@@ -14,7 +15,7 @@ interface SummaryCardProps {
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, subtitle, type, progress, compact = false }) => {
-    const format = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: compact ? "compact" : "standard" }).format(v);
+    const format = (v: number) => formatCurrency(v, compact);
 
     const getStyles = () => {
         // Futuristic Gradients with stronger text colors
@@ -75,20 +76,20 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, subtitle, type,
                         <Icon size={compact ? 18 : 22} strokeWidth={3} />
                     </div>
                     {compact && progress && (
-                        <span className={`text-[10px] font-black px-2 py-1 rounded-lg backdrop-blur-md bg-black/10 ${s.text}`}>
+                        <span className={`text-sm font-black px-2 py-1 rounded-lg backdrop-blur-md bg-black/10 ${s.text}`}>
                             {Math.round(percentage)}%
                         </span>
                     )}
                 </div>
                 
                 <div className="flex flex-col">
-                    <span className={`text-[11px] font-black uppercase tracking-widest opacity-90 mb-1 ${s.text}`}>{title}</span>
-                    <span className={`${compact ? 'text-xl' : 'text-3xl'} font-black tracking-tight leading-none ${s.text} drop-shadow-sm`}>
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                    <span className={`text-sm font-black uppercase tracking-widest opacity-90 mb-1 ${s.text}`}>{title}</span>
+                    <span className={`${compact ? 'text-2xl' : 'text-4xl'} font-black tracking-tight leading-none ${s.text} drop-shadow-sm`}>
+                        {formatCurrency(value)}
                     </span>
                     
-                    {subtitle && !compact && <span className={`text-sm font-bold mt-1 ${s.subText}`}>{subtitle}</span>}
-                    {subtitle && compact && <span className={`text-[10px] font-bold mt-1 ${s.subText} opacity-90`}>{subtitle}</span>}
+                    {subtitle && !compact && <span className={`text-base font-black mt-1 ${s.subText}`}>{subtitle}</span>}
+                    {subtitle && compact && <span className={`text-sm font-black mt-1 ${s.subText} opacity-90`}>{subtitle}</span>}
                 </div>
             </div>
 
@@ -96,7 +97,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, subtitle, type,
                 <div className="mt-4 relative z-10 flex flex-col gap-2">
                     {/* Progress Bar */}
                     <div>
-                        <div className={`flex justify-between text-[10px] font-black mb-1.5 ${s.subText} uppercase tracking-wider`}>
+                        <div className={`flex justify-between text-sm font-black mb-1.5 ${s.subText} uppercase tracking-wider`}>
                             <span>Pago</span>
                             {!compact && <span>{format(progress.max)}</span>}
                         </div>
@@ -108,12 +109,12 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, subtitle, type,
                     {/* NEW: Remaining Stats */}
                     {remaining > 0 && (
                         <div className={`flex justify-between items-end border-t border-white/10 pt-2 mt-1`}>
-                             <span className={`text-[9px] font-black uppercase tracking-wider ${s.subText} opacity-80`}>Falta</span>
+                             <span className={`text-sm font-black uppercase tracking-wider ${s.subText} opacity-80`}>Falta</span>
                              <div className="text-right leading-none">
-                                <span className={`block text-xs font-black ${s.text}`}>
+                                <span className={`block text-base font-black ${s.text}`}>
                                     {format(remaining)}
                                 </span>
-                                <span className={`text-[9px] font-bold ${s.subText} opacity-80`}>
+                                <span className={`text-sm font-black ${s.subText} opacity-80`}>
                                     ({Math.round(remainingPercentage)}%)
                                 </span>
                              </div>

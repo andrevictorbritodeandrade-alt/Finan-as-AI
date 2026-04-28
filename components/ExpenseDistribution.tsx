@@ -10,6 +10,7 @@ interface ExpenseDistributionProps {
 }
 
 // Reuse icon logic locally or import if centralized
+import { formatCurrency } from '../utils/financeUtils';
 const getCategoryIcon = (category: string) => {
     const props = { size: 16, strokeWidth: 3 };
     switch (category) {
@@ -66,7 +67,7 @@ const ExpenseDistribution: React.FC<ExpenseDistributionProps> = ({ expenses }) =
         }))
         .sort((a, b) => b.amount - a.amount);
 
-    const format = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(v);
+    const format = (v: number) => formatCurrency(v, true);
 
     if (sortedCategories.length === 0) return null;
 
@@ -90,7 +91,7 @@ const ExpenseDistribution: React.FC<ExpenseDistributionProps> = ({ expenses }) =
                                 <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${getCategoryColor(item.cat).replace('bg-', 'bg-opacity-20 bg-').replace('text-100', 'text-700')}`}>
                                     {getCategoryIcon(item.cat)}
                                 </div>
-                                <span className="text-xs font-extrabold text-slate-700">{item.cat}</span>
+                                <span className="text-sm font-black text-slate-700">{item.cat}</span>
                             </div>
                             <div className="text-right">
                                 <span className="text-xs font-black text-slate-900 mr-2">{format(item.amount)}</span>

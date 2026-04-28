@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldCheck, ShieldAlert, TrendingUp, Zap, Activity } from 'lucide-react';
+import { formatCurrency } from '../utils/financeUtils';
 
 interface FinancialHealthWidgetProps {
     income: number;
@@ -121,16 +122,16 @@ const FinancialHealthWidget: React.FC<FinancialHealthWidgetProps> = ({ income, e
             {/* Bottom Bar: Stats */}
             <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
                 <div className="flex flex-col">
-                    <span className="text-[8px] font-extrabold uppercase text-slate-500 tracking-wider">Margem</span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Margem</span>
                     <span className={`text-xs font-black ${surplus >= 0 ? 'text-white' : 'text-rose-400'}`}>
                         {surplus >= 0 ? '+' : ''}{Math.round(savingsRate)}%
                     </span>
                 </div>
                 <div className="h-4 w-px bg-white/10 mx-2"></div>
                 <div className="flex flex-col text-right">
-                    <span className="text-[8px] font-extrabold uppercase text-slate-500 tracking-wider">Poder</span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Poder</span>
                     <span className="text-xs font-black text-white">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(surplus)}
+                        {formatCurrency(surplus, true)}
                     </span>
                 </div>
             </div>

@@ -144,15 +144,15 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
                     <div>
-                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                        <span className="text-sm font-black text-gray-400 uppercase tracking-widest">
                             {transaction ? 'Editar' : 'Nova'}
                         </span>
-                        <h2 className="text-xl font-black text-slate-900">
+                        <h2 className="text-2xl font-black text-slate-900">
                             {transaction ? 'Detalhes da Conta' : 'Adicionar Conta'}
                         </h2>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-800 transition-colors">
-                        <X size={24} strokeWidth={3} />
+                        <X size={28} strokeWidth={3} />
                     </button>
                 </div>
 
@@ -164,41 +164,41 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                         <button
                             type="button"
                             onClick={() => setTransactionType('incomes')}
-                            className={`flex-1 py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all ${
+                            className={`flex-1 py-4 rounded-xl text-base font-black flex items-center justify-center gap-2 transition-all ${
                                 transactionType === 'incomes' 
                                 ? 'bg-emerald-100 text-emerald-700 shadow-sm' 
                                 : 'text-slate-400 hover:text-slate-600'
                             }`}
                         >
-                            <ArrowUpCircle size={18} strokeWidth={3} /> Receita
+                            <ArrowUpCircle size={22} strokeWidth={3} /> Receita
                         </button>
                         <button
                             type="button"
                             onClick={() => setTransactionType('expenses')}
-                            className={`flex-1 py-3 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all ${
+                            className={`flex-1 py-4 rounded-xl text-base font-black flex items-center justify-center gap-2 transition-all ${
                                 transactionType === 'expenses' 
                                 ? 'bg-rose-100 text-rose-700 shadow-sm' 
                                 : 'text-slate-400 hover:text-slate-600'
                             }`}
                         >
-                            <ArrowDownCircle size={18} strokeWidth={3} /> Despesa
+                            <ArrowDownCircle size={22} strokeWidth={3} /> Despesa
                         </button>
                     </div>
 
                     {/* Expense Group Selector (Fixed vs Variable) - Only for Expenses */}
                     {transactionType === 'expenses' && (
                         <div className="space-y-2">
-                             <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
-                                <Layers size={14} strokeWidth={3} /> Classificação
+                             <label className="text-base font-black text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
+                                <Layers size={18} strokeWidth={3} /> Classificação
                             </label>
                             <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
                                 <button
                                     type="button"
                                     onClick={() => setGroupType('Despesas Fixas')}
-                                    className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
+                                    className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${
                                         groupType === 'Despesas Fixas' 
-                                        ? 'bg-teal-100 text-teal-700' 
-                                        : 'text-slate-400'
+                                        ? 'bg-teal-100 text-teal-700 shadow-sm' 
+                                        : 'text-slate-400 hover:text-slate-600'
                                     }`}
                                 >
                                     Fixa / Recorrente
@@ -206,10 +206,10 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                 <button
                                     type="button"
                                     onClick={() => setGroupType('Despesas Variáveis')}
-                                    className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
+                                    className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${
                                         groupType === 'Despesas Variáveis' 
-                                        ? 'bg-indigo-100 text-indigo-700' 
-                                        : 'text-slate-400'
+                                        ? 'bg-indigo-100 text-indigo-700 shadow-sm' 
+                                        : 'text-slate-400 hover:text-slate-600'
                                     }`}
                                 >
                                     Variável / Pontual
@@ -220,8 +220,8 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
 
                     {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
-                            <Type size={14} strokeWidth={3} /> Descrição
+                        <label className="text-base font-black text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
+                            <Type size={18} strokeWidth={3} /> Descrição
                         </label>
                         <input 
                             type="text" 
@@ -229,15 +229,15 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             placeholder="Ex: Supermercado, Aluguel..."
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-extrabold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm placeholder:font-normal"
+                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm placeholder:font-normal placeholder:opacity-50"
                         />
                     </div>
 
                     {/* Amount & Paid Status */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
-                                <DollarSign size={14} strokeWidth={3} /> Valor
+                            <label className="text-base font-black text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
+                                <DollarSign size={18} strokeWidth={3} /> Valor
                             </label>
                             <input 
                                 type="number" 
@@ -245,24 +245,24 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                                 required
                                 value={formData.amount || ''}
                                 onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
-                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
                             />
                         </div>
 
                         <div className="space-y-2">
-                             <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
+                             <label className="text-base font-black text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
                                 Status
                             </label>
                             <button
                                 type="button"
                                 onClick={() => handleChange('paid', !formData.paid)}
-                                className={`w-full h-[58px] rounded-2xl font-black flex items-center justify-center gap-2 border transition-all shadow-sm ${
+                                className={`w-full h-[64px] rounded-2xl font-black text-lg flex items-center justify-center gap-2 border transition-all shadow-sm ${
                                     formData.paid 
                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-emerald-200' 
                                     : 'bg-white border-slate-200 text-slate-500 hover:bg-gray-50'
                                 }`}
                             >
-                                {formData.paid ? <Check size={18} strokeWidth={4} /> : null}
+                                {formData.paid ? <Check size={20} strokeWidth={4} /> : null}
                                 {formData.paid ? 'PAGO' : 'PENDENTE'}
                             </button>
                         </div>
@@ -272,37 +272,37 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                     {transactionType === 'expenses' && (
                         <div className="space-y-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                             <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-                                    <Hash size={14} strokeWidth={3} /> É Parcelado?
+                                <label className="text-base font-black text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                                    <Hash size={18} strokeWidth={3} /> É Parcelado?
                                 </label>
                                 <div 
                                     onClick={() => setIsInstallment(!isInstallment)}
-                                    className={`w-12 h-7 rounded-full flex items-center px-1 cursor-pointer transition-colors ${isInstallment ? 'bg-indigo-500' : 'bg-slate-200'}`}
+                                    className={`w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-colors ${isInstallment ? 'bg-indigo-500' : 'bg-slate-200'}`}
                                 >
-                                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${isInstallment ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                    <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${isInstallment ? 'translate-x-6' : 'translate-x-0'}`}></div>
                                 </div>
                             </div>
                             
                             {isInstallment && (
                                 <div className="grid grid-cols-2 gap-4 pt-2 animate-fadeIn">
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase">Parcela Atual</label>
+                                        <label className="text-xs font-black text-slate-400 uppercase">Parcela Atual</label>
                                         <input 
                                             type="number" 
                                             min="1"
                                             value={currentInst}
                                             onChange={(e) => setCurrentInst(parseInt(e.target.value) || 1)}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold outline-none focus:border-indigo-500 text-center"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-black outline-none focus:border-indigo-500 text-center text-lg"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase">Total Parcelas</label>
+                                        <label className="text-xs font-black text-slate-400 uppercase">Total Parcelas</label>
                                         <input 
                                             type="number" 
                                             min="2"
                                             value={totalInst}
                                             onChange={(e) => setTotalInst(parseInt(e.target.value) || 2)}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold outline-none focus:border-indigo-500 text-center"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-black outline-none focus:border-indigo-500 text-center text-lg"
                                         />
                                     </div>
                                 </div>
@@ -313,49 +313,49 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                     {/* Suspension Logic */}
                     <div className="space-y-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                         <div className="flex items-center justify-between mb-2">
-                            <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-                                <FileWarning size={14} strokeWidth={3} /> Suspender Conta?
+                            <label className="text-base font-black text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                                <FileWarning size={18} strokeWidth={3} /> Suspender Conta?
                             </label>
                             <div 
                                 onClick={() => setIsSuspended(!isSuspended)}
-                                className={`w-12 h-7 rounded-full flex items-center px-1 cursor-pointer transition-colors ${isSuspended ? 'bg-rose-500' : 'bg-slate-200'}`}
+                                className={`w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-colors ${isSuspended ? 'bg-rose-500' : 'bg-slate-200'}`}
                             >
-                                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${isSuspended ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${isSuspended ? 'translate-x-6' : 'translate-x-0'}`}></div>
                             </div>
                         </div>
                         
                         {isSuspended && (
                             <div className="pt-2 animate-fadeIn space-y-2">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">Suspender até (Mês/Ano)</label>
+                                <label className="text-xs font-black text-slate-400 uppercase">Suspender até (Mês/Ano)</label>
                                 <input 
                                     type="month" 
                                     value={suspendedUntil}
                                     onChange={(e) => setSuspendedUntil(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-bold outline-none focus:border-rose-500"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-black outline-none focus:border-rose-500 text-lg"
                                 />
-                                <p className="text-[10px] text-slate-400 font-medium italic">Deixe em branco para suspensão por tempo indeterminado.</p>
+                                <p className="text-[10px] text-slate-400 font-black italic">Deixe em branco para suspensão por tempo indeterminado.</p>
                             </div>
                         )}
                     </div>
 
                     {/* Category */}
                     <div className="space-y-2">
-                        <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
-                            <Tag size={14} strokeWidth={3} /> Categoria
+                        <label className="text-base font-black text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
+                            <Tag size={18} strokeWidth={3} /> Categoria
                         </label>
                         <div className="relative">
                             <select 
                                 value={formData.category}
                                 onChange={(e) => handleChange('category', e.target.value)}
                                 style={{ paddingLeft: '48px' }}
-                                className="w-full appearance-none bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-extrabold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                                className="w-full appearance-none bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
                             >
                                 {CATEGORIES.map(cat => (
                                     <option key={cat} value={cat}>{cat}</option>
                                 ))}
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                <ChevronDown size={20} strokeWidth={3} />
+                                <ChevronDown size={24} strokeWidth={3} />
                             </div>
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-600">
                                 {getCategoryIcon(formData.category)}
@@ -365,31 +365,31 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
 
                     {/* Date */}
                     <div className="space-y-2">
-                        <label className="text-xs font-extrabold text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
-                            <Calendar size={14} strokeWidth={3} /> Data / Vencimento
+                        <label className="text-base font-black text-slate-500 uppercase tracking-wide flex items-center gap-1.5 ml-1">
+                            <Calendar size={18} strokeWidth={3} /> Data / Vencimento
                         </label>
                         <input 
                             type="date" 
                             value={currentDateValue}
                             onChange={(e) => handleChange(dateField, e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-extrabold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 font-black text-lg focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-sm"
                         />
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="pt-4 flex gap-3">
+                    <div className="pt-4 flex gap-3 pb-4">
                         <button 
                             type="button" 
                             onClick={onClose}
-                            className="flex-1 py-4 rounded-2xl font-black text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                            className="flex-1 py-5 rounded-2xl font-black text-lg text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
                         >
                             Cancelar
                         </button>
                         <button 
                             type="submit" 
-                            className="flex-[2] py-4 rounded-2xl font-black text-white bg-slate-900 hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20 active:scale-95 transform"
+                            className="flex-[2] py-5 rounded-2xl font-black text-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-xl shadow-slate-900/20 active:scale-95 transform"
                         >
-                            <Save size={18} strokeWidth={3} /> Salvar
+                            <Save size={22} strokeWidth={3} /> Salvar
                         </button>
                     </div>
                 </form>

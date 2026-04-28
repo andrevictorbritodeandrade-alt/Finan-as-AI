@@ -13,11 +13,15 @@ import { db, auth, isConfigured, onAuthStateChanged, signInAnonymously } from '.
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { FAMILY_ID } from './constants';
 import { Target, Plus, ShoppingBag, User, Users, ArrowRight, Plane, Wallet, PiggyBank, Home as HomeIcon, Palmtree, Heart, Car, GraduationCap, MoreHorizontal, TrendingUp, ShoppingCart, FileWarning } from 'lucide-react';
+import { formatCurrency } from './utils/financeUtils';
 
 const App: React.FC = () => {
     // App State
-    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); // Inicia no mês atual
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    // If current date is >= April 27th, default to May 2026, otherwise current month
+    const now = new Date();
+    const isLateApril = now.getMonth() === 3 && now.getDate() >= 27; 
+    const [currentMonth, setCurrentMonth] = useState(isLateApril ? 5 : now.getMonth() + 1);
+    const [currentYear, setCurrentYear] = useState(isLateApril ? 2026 : now.getFullYear());
     const [monthData, setMonthData] = useState<MonthData | null>(null);
     const [view, setView] = useState<'home' | 'transactions' | 'goals'>('home');
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,25 +35,63 @@ const App: React.FC = () => {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    // Force refresh for April 2026 updates
+    const [checkIn, setCheckIn] = useState<{ isDone: boolean; date: string | null }>({ isDone: false, date: null });
+
+    // Load check-in state
     useEffect(() => {
-        const forceUpdateApr = localStorage.getItem('force_update_apr2026_v3');
-        if (!forceUpdateApr) {
+        const saved = localStorage.getItem(`checkin_${currentYear}_${currentMonth}`);
+        if (saved) setCheckIn(JSON.parse(saved));
+        else setCheckIn({ isDone: false, date: null });
+    }, [currentYear, currentMonth]);
+
+    const handleCheckIn = () => {
+        const date = new Date().toISOString();
+        const newState = { isDone: true, date };
+        setCheckIn(newState);
+        localStorage.setItem(`checkin_${currentYear}_${currentMonth}`, JSON.stringify(newState));
+    };
+
+    // Force refresh to pull updated categories and grouping (v7)
+    useEffect(() => {
+        const forceUpdateV7 = localStorage.getItem('force_update_v7_formatting');
+        if (!forceUpdateV7) {
+            localStorage.removeItem('financeData_2026_3');
             localStorage.removeItem('financeData_2026_4');
-            localStorage.setItem('force_update_apr2026_v3', 'true');
+            localStorage.removeItem('financeData_2026_5');
+            localStorage.removeItem('financeData_2026_6');
+            localStorage.setItem('force_update_v7_formatting', 'true');
             window.location.reload();
         }
     }, []);
 
-    // Force refresh for March 2026 updates
+    // Automatic salary payment
     useEffect(() => {
-        const forceUpdate = localStorage.getItem('force_update_mar2026_v2');
-        if (!forceUpdate) {
-            localStorage.removeItem('financeData_2026_3');
-            localStorage.setItem('force_update_mar2026_v2', 'true');
-            window.location.reload();
+        if (!monthData) return;
+        
+        const now = new Date();
+        const payTimeLimit = new Date();
+        payTimeLimit.setHours(7, 1, 0, 0);
+
+        let updated = false;
+        const newIncomes = monthData.incomes.map(item => {
+            if (item.category === 'Salário' && !item.paid && item.dueDate) {
+                const [y, m, d] = item.dueDate.split('-').map(Number);
+                const dueDate = new Date(y, m - 1, d);
+                
+                // If today is or after due date and it's past 07:01 AM (or it's after the due date)
+                if (now >= dueDate && (now.getDate() !== dueDate.getDate() || now >= payTimeLimit)) {
+                    updated = true;
+                    return { ...item, paid: true, paidAt: now.toISOString() };
+                }
+            }
+            return item;
+        });
+
+        if (updated) {
+            const newData = { ...monthData, incomes: newIncomes };
+            saveData(newData, currentYear, currentMonth);
         }
-    }, []);
+    }, [monthData]);
 
     // Ref for accessing latest data in closures/listeners
     const monthDataRef = useRef<MonthData | null>(null);
@@ -100,8 +142,22 @@ const App: React.FC = () => {
     const loadData = async (year: number, month: number) => {
         const key = getStorageKey(year, month);
         const local = localStorage.getItem(key);
+        
+        const filterUnwanted = (data: MonthData): MonthData => {
+            if (year === 2026 && (month === 3 || month === 4 || month === 5)) {
+                return {
+                    ...data,
+                    expenses: data.expenses.filter(e => 
+                        !e.description.toUpperCase().includes("VIVO ANDRÉ") && 
+                        !e.description.toUpperCase().includes("VIVO MARCELLY")
+                    )
+                };
+            }
+            return data;
+        };
+
         if (local) {
-            setMonthData(JSON.parse(local));
+            setMonthData(filterUnwanted(JSON.parse(local)));
         } else {
             const newData = generateMonthData(year, month);
             setMonthData(newData);
@@ -122,8 +178,19 @@ const App: React.FC = () => {
         
         const unsubscribe = onSnapshot(docRef, (snapshot) => {
             if (snapshot.exists()) {
-                const cloudData = snapshot.data() as MonthData;
+                let cloudData = snapshot.data() as MonthData;
                 const localData = monthDataRef.current;
+
+                // Apply global filter to cloud data as well
+                if (year === 2026 && (month === 3 || month === 4 || month === 5)) {
+                    cloudData = {
+                        ...cloudData,
+                        expenses: cloudData.expenses.filter(e => 
+                            !e.description.toUpperCase().includes("VIVO ANDRÉ") && 
+                            !e.description.toUpperCase().includes("VIVO MARCELLY")
+                        )
+                    };
+                }
 
                 // Only update if cloud data is newer
                 if (!localData || cloudData.updatedAt > localData.updatedAt) {
@@ -183,7 +250,12 @@ const App: React.FC = () => {
     const handleTogglePaid = (id: string, paid: boolean, type: TransactionType) => {
         if (!monthData) return;
         const newData = { ...monthData };
-        newData[type] = newData[type].map(t => t.id === id ? { ...t, paid } : t);
+        newData[type] = newData[type].map(t => {
+            if (t.id === id) {
+                return { ...t, paid, paidAt: paid ? new Date().toISOString() : undefined };
+            }
+            return t;
+        });
         saveData(newData, currentYear, currentMonth);
     };
 
@@ -294,10 +366,12 @@ const App: React.FC = () => {
         if (!monthData) return [];
         const groups: Record<string, { name: string, total: number, paidAmount: number, items: Transaction[] }> = {};
         
-        monthData.expenses.forEach(e => {
-            const match = e.description.match(/\(([^)]+)\)/);
-            if (match) {
-                const name = match[1].toUpperCase();
+        // Include both expenses and avulsosItems in the grouping
+        const allItems = [...monthData.expenses, ...monthData.avulsosItems];
+        
+        allItems.forEach(e => {
+            if (e.group && e.group !== 'Moradia' && e.group !== 'Despesas Fixas' && e.group !== 'Despesas Variáveis' && !e.isDistribution) {
+                const name = e.group.toUpperCase();
                 if (!groups[name]) groups[name] = { name, total: 0, paidAmount: 0, items: [] };
                 groups[name].total += e.amount;
                 if (e.paid) groups[name].paidAmount += e.amount;
@@ -367,41 +441,6 @@ const App: React.FC = () => {
                     </button>
                 </nav>
 
-                <div className="mt-auto pt-6 border-t border-slate-100">
-                    <div className="flex flex-col gap-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Carteiras</h4>
-                        {sidebarAccounts.map(acc => (
-                            <div key={acc.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                                        <Wallet size={16} className="text-slate-400" />
-                                    </div>
-                                    <span className="text-xs font-bold text-slate-600">{acc.name}</span>
-                                </div>
-                                <span className="text-xs font-black text-slate-900">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(acc.balance)}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-8 flex items-center justify-between p-2">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" referrerPolicy="no-referrer" />
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-800">André Silva</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Status: Conectado</span>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => setShowSecurityMessage(true)}
-                            className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
-                            title="Configurações"
-                        >
-                            <MoreHorizontal size={20} />
-                        </button>
-                    </div>
-                </div>
             </aside>
 
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
@@ -412,9 +451,9 @@ const App: React.FC = () => {
                 <Header 
                     month={currentMonth} 
                     year={currentYear} 
-                    balance={balance}
+                    balance={checkIn.isDone ? balance : 0}
+                    checkInDate={checkIn.date}
                     onMonthChange={handleMonthChange}
-                    onToggleSidebar={() => setSidebarOpen(true)}
                     onSync={() => saveData(monthData, currentYear, currentMonth)}
                     syncStatus={syncStatus}
                 />
@@ -443,8 +482,8 @@ const App: React.FC = () => {
                                 <FileWarning size={40} strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col gap-2">
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight">Segurança de Dados</h3>
-                                <p className="text-sm font-bold text-slate-500 leading-relaxed">
+                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Segurança de Dados</h3>
+                                <p className="text-base font-black text-slate-500 leading-relaxed">
                                     Por diretriz de segurança inabalável, a exclusão de contas e transações foi desativada. Seus dados estão protegidos e permanecerão no backup do sistema e na nuvem para sempre.
                                 </p>
                             </div>
@@ -458,7 +497,10 @@ const App: React.FC = () => {
                     </div>
                 )}
 
-                <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 scroll-smooth">
+                <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 scroll-smooth relative">
+                    {/* Fade effect on scroll top */}
+                    <div className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#f8fafc] via-[#f8fafc]/80 to-transparent z-[15] pointer-events-none -mt-4 lg:-mt-8 -mx-4 lg:-mx-8"></div>
+                    
                     <AnimatePresence mode="wait">
                         {view === 'home' && (
                             <motion.div 
@@ -474,13 +516,13 @@ const App: React.FC = () => {
                                 <div className="lg:hidden flex p-1 bg-white rounded-2xl shadow-sm border border-slate-100 mb-2">
                                     <button 
                                         onClick={() => setActiveTab('overview')}
-                                        className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400'}`}
+                                        className={`flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400'}`}
                                     >
                                         Visão Geral
                                     </button>
                                     <button 
                                         onClick={() => setView('transactions')}
-                                        className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide text-slate-400"
+                                        className="flex-1 py-2.5 rounded-xl text-sm font-black uppercase tracking-wide text-slate-400"
                                     >
                                         Gastos
                                     </button>
@@ -488,43 +530,43 @@ const App: React.FC = () => {
 
                                 {activeTab === 'overview' && (
                                     <>
-                                        {/* DEBTS BY PERSON CARD */}
+                                        {/* EXPENSES BY CATEGORY CARD */}
                                         <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-6 lg:p-8 border border-white/60 shadow-xl shadow-slate-200/40 mb-8">
                                             <div className="flex items-center gap-3 mb-8">
                                                 <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
-                                                    <Users size={20} strokeWidth={3} />
+                                                    <Users size={24} strokeWidth={3} />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">Dívidas a Pagar (Por Pessoa)</h3>
-                                                    <span className="text-xs font-bold text-slate-400">Valores para repassar aos familiares</span>
+                                                    <h3 className="text-xl font-black text-slate-800 tracking-tight">Despesas por Categoria</h3>
+                                                    <span className="text-sm font-black text-slate-400">Valores agrupados</span>
                                                 </div>
                                             </div>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                                 {groupedDebts.map(group => (
-                                                    <div key={group.name} className="bg-white rounded-3xl p-5 border border-slate-50 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
+                                                    <div key={group.name} className="bg-white rounded-3xl p-6 border border-slate-50 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
                                                         <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getDebtColor(group.name)} text-white flex items-center justify-center shrink-0 shadow-lg shadow-slate-200/50`}>
-                                                                <User size={20} strokeWidth={2.5} />
+                                                            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getDebtColor(group.name)} text-white flex items-center justify-center shrink-0 shadow-lg shadow-slate-200/50`}>
+                                                                <User size={24} strokeWidth={2.5} />
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{group.name}</span>
-                                                                <span className="text-lg font-black text-slate-800 tracking-tight">
-                                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(group.total - group.paidAmount)}
+                                                                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{group.name}</span>
+                                                                <span className="text-xl font-black text-slate-800 tracking-tight">
+                                                                    {formatCurrency(group.total - group.paidAmount)}
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div className="p-2 bg-slate-50 rounded-xl text-slate-300 group-hover:text-rose-500 transition-colors">
-                                                            <ArrowRight size={16} />
+                                                        <div className="p-3 bg-slate-50 rounded-xl text-slate-300 group-hover:text-rose-500 transition-colors">
+                                                            <ArrowRight size={20} />
                                                         </div>
                                                     </div>
                                                 ))}
                                                 {groupedDebts.length === 0 && (
-                                                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400 gap-3">
-                                                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
-                                                            <PiggyBank size={32} />
+                                                    <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 gap-4">
+                                                        <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center">
+                                                            <PiggyBank size={40} />
                                                         </div>
-                                                        <span className="text-sm font-bold">Nenhuma dívida pendente com familiares!</span>
+                                                        <span className="text-base font-black">Nenhuma dívida pendente com familiares!</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -534,11 +576,11 @@ const App: React.FC = () => {
                                         <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-6 lg:p-8 border border-white/60 shadow-xl shadow-slate-200/40">
                                             <div className="flex items-center gap-3 mb-8">
                                                 <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                                                    <PiggyBank size={20} strokeWidth={3} />
+                                                    <PiggyBank size={24} strokeWidth={3} />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">Visão Geral dos Gastos</h3>
-                                                    <span className="text-xs font-bold text-slate-400">Para onde foi seu dinheiro</span>
+                                                    <h3 className="text-xl font-black text-slate-800 tracking-tight">Visão Geral dos Gastos</h3>
+                                                    <span className="text-sm font-black text-slate-400">Para onde foi seu dinheiro</span>
                                                 </div>
                                             </div>
 
@@ -562,25 +604,25 @@ const App: React.FC = () => {
                                                     const Icon = s.icon;
 
                                                     return (
-                                                        <div key={cat} className="bg-white rounded-3xl p-5 border border-slate-50 shadow-sm flex items-center gap-4 group hover:shadow-md transition-all">
-                                                            <div className={`w-14 h-14 rounded-2xl ${s.bg} ${s.text} flex items-center justify-center shrink-0`}>
+                                                        <div key={cat} className="bg-white rounded-3xl p-4 border border-slate-50 shadow-sm flex items-center gap-2 group hover:shadow-md transition-all overflow-hidden">
+                                                            <div className={`w-12 h-12 rounded-2xl ${s.bg} ${s.text} flex items-center justify-center shrink-0`}>
                                                                 <Icon size={24} strokeWidth={2.5} />
                                                             </div>
-                                                            <div className="flex-1 flex flex-col gap-1 overflow-hidden">
-                                                                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{cat}</span>
-                                                                <span className="text-xl font-black text-slate-800 tracking-tight">
-                                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)}
+                                                            <div className="flex-1 flex flex-col gap-0.5 overflow-hidden">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{cat}</span>
+                                                                <span className="text-base font-black text-slate-800 tracking-tight truncate">
+                                                                    {formatCurrency(amount)}
                                                                 </span>
                                                                 <div className="w-full bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
                                                                     <div className={`h-full ${s.bar} rounded-full`} style={{ width: `${percent}%` }}></div>
                                                                 </div>
                                                             </div>
-                                                            <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                                                            <div className="relative w-10 h-10 flex items-center justify-center shrink-0 ml-1">
                                                                 <svg className="w-full h-full transform -rotate-90">
-                                                                    <circle cx="24" cy="24" r="20" fill="transparent" stroke="currentColor" strokeWidth="4" className="text-slate-100" />
-                                                                    <circle cx="24" cy="24" r="20" fill="transparent" stroke="currentColor" strokeWidth="4" strokeDasharray={125.6} strokeDashoffset={125.6 - (125.6 * percent) / 100} className={s.text} strokeLinecap="round" />
+                                                                    <circle cx="20" cy="20" r="17" fill="transparent" stroke="currentColor" strokeWidth="4" className="text-slate-100" />
+                                                                    <circle cx="20" cy="20" r="17" fill="transparent" stroke="currentColor" strokeWidth="4" strokeDasharray={106.8} strokeDashoffset={106.8 - (106.8 * percent) / 100} className={s.text} strokeLinecap="round" />
                                                                 </svg>
-                                                                <span className="absolute text-[10px] font-black text-slate-600">{percent}%</span>
+                                                                <span className="absolute text-[8px] font-black text-slate-600">{percent}%</span>
                                                             </div>
                                                         </div>
                                                     );
@@ -590,61 +632,71 @@ const App: React.FC = () => {
 
                                         {/* DASHBOARD CARDS - Matching Screenshot 1 style */}
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden min-h-[240px]">
+                                            <div className="bg-slate-900 rounded-[2.5rem] p-6 lg:p-8 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden min-h-[320px] flex flex-col">
                                                 <div className="absolute top-0 right-0 p-8 opacity-10">
-                                                    <TrendingUp size={140} />
+                                                    <TrendingUp size={160} />
                                                 </div>
-                                                <div className="relative z-10 h-full flex flex-col">
-                                                    <h3 className="text-xl font-black mb-6 tracking-tight">Visão Geral do Mês</h3>
-                                                    <div className="flex gap-8 items-end flex-1">
-                                                        <div className="flex flex-col gap-4 flex-1">
+                                                <div className="relative z-10 flex flex-col flex-1 h-full">
+                                                    <h3 className="text-xl lg:text-2xl font-black mb-6 lg:mb-8 tracking-tight">Visão Geral do Mês</h3>
+                                                    <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end flex-1">
+                                                        <div className="flex flex-col gap-4 flex-1 w-full">
                                                             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-1">Receitas</span>
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-lg font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.combined.total)}</span>
-                                                                    <div className="flex gap-1 items-end h-8">
+                                                                <div className="flex justify-between items-center mb-1">
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Receitas</span>
+                                                                    {!checkIn.isDone && (
+                                                                        <button
+                                                                            onClick={handleCheckIn}
+                                                                            className="text-[10px] bg-white text-emerald-600 px-2 py-0.5 rounded font-black uppercase tracking-widest hover:bg-emerald-50 transition-colors"
+                                                                        >
+                                                                            Check-in
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center justify-between gap-2 overflow-hidden">
+                                                                    <span className="text-xl font-black truncate">{formatCurrency(stats.combined.total)}</span>
+                                                                    <div className="flex gap-1 items-end h-8 shrink-0">
                                                                         {[30, 50, 40, 70, 60].map((h, i) => <div key={i} className="w-1.5 bg-emerald-400 rounded-full" style={{ height: `${h}%` }}></div>)}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
                                                                 <span className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-1">Despesas</span>
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-lg font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.realExpenses.total)}</span>
-                                                                    <div className="flex gap-1 items-end h-8">
+                                                                <div className="flex items-center justify-between gap-2 overflow-hidden">
+                                                                    <span className="text-xl font-black truncate">{formatCurrency(stats.realExpenses.total)}</span>
+                                                                    <div className="flex gap-1 items-end h-8 shrink-0">
                                                                         {[60, 40, 80, 50, 70].map((h, i) => <div key={i} className="w-1.5 bg-rose-400 rounded-full" style={{ height: `${h}%` }}></div>)}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="relative w-24 h-24 flex items-center justify-center">
+                                                        <div className="relative w-24 h-24 lg:w-28 lg:h-28 flex items-center justify-center shrink-0">
                                                             <svg className="w-full h-full transform -rotate-90">
-                                                                <circle cx="48" cy="48" r="40" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
-                                                                <circle cx="48" cy="48" r="40" fill="transparent" stroke="#10b981" strokeWidth="8" strokeDasharray={251.2} strokeDashoffset={251.2 - (251.2 * 95) / 100} strokeLinecap="round" />
+                                                                <circle cx="50%" cy="50%" r="42%" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                                                                <circle cx="50%" cy="50%" r="42%" fill="transparent" stroke="#10b981" strokeWidth="8" strokeDasharray="260" strokeDashoffset={260 - (260 * 95) / 100} strokeLinecap="round" />
                                                             </svg>
                                                             <div className="absolute flex flex-col items-center">
-                                                                <span className="text-xs font-black">95%</span>
-                                                                <span className="text-[8px] font-bold opacity-60 uppercase">Total</span>
+                                                                <span className="text-base lg:text-lg font-black">95%</span>
+                                                                <span className="text-[9px] font-black opacity-60 uppercase">Total</span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 gap-6">
-                                                <div className="bg-emerald-500 rounded-[2.5rem] p-8 text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden">
+                                            <div className="grid grid-cols-1 gap-4 lg:gap-6">
+                                                <div className="bg-emerald-500 rounded-[2.5rem] p-6 lg:p-8 text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden flex-1">
                                                     <div className="absolute bottom-0 right-0 p-4 opacity-20">
-                                                        <TrendingUp size={80} />
+                                                        <TrendingUp size={60} />
                                                     </div>
-                                                    <h3 className="text-lg font-black mb-4 tracking-tight">Resumo de Receitas</h3>
-                                                    <div className="flex items-end justify-between">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-3xl font-black tracking-tighter">
-                                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.combined.total)}
+                                                    <h3 className="text-base lg:text-lg font-black mb-3 lg:mb-4 tracking-tight">Resumo de Receitas</h3>
+                                                    <div className="flex items-end justify-between gap-2 overflow-hidden">
+                                                        <div className="flex flex-col overflow-hidden">
+                                                            <span className="text-2xl lg:text-3xl font-black tracking-tighter truncate">
+                                                                {formatCurrency(stats.combined.total)}
                                                             </span>
-                                                            <span className="text-xs font-bold opacity-80 mt-1">Tendência positiva este mês</span>
+                                                            <span className="text-[10px] font-bold opacity-80 mt-0.5">Tendência positiva</span>
                                                         </div>
-                                                        <div className="w-32 h-16 relative">
+                                                        <div className="w-24 lg:w-32 h-12 lg:h-16 relative shrink-0">
                                                             <svg viewBox="0 0 100 40" className="w-full h-full">
                                                                 <path d="M0 35 Q 20 30, 40 35 T 80 10 T 100 5" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" />
                                                                 <circle cx="80" cy="10" r="4" fill="white" />
@@ -654,17 +706,17 @@ const App: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-sky-500 rounded-[2.5rem] p-8 text-white shadow-xl shadow-sky-500/20 relative overflow-hidden">
+                                                <div className="bg-sky-500 rounded-[2.5rem] p-6 lg:p-8 text-white shadow-xl shadow-sky-500/20 relative overflow-hidden flex-1">
                                                     <div className="absolute top-0 right-0 p-4 opacity-20">
-                                                        <Wallet size={80} />
+                                                        <Wallet size={60} />
                                                     </div>
-                                                    <h3 className="text-lg font-black mb-2 tracking-tight">Gerenciamento de Contas</h3>
-                                                    <span className="text-2xl font-black tracking-tighter block mb-1">
-                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balance)}
+                                                    <h3 className="text-base lg:text-lg font-black mb-2 tracking-tight">Gerenciamento de Contas</h3>
+                                                    <span className="text-xl lg:text-2xl font-black tracking-tighter block mb-1 truncate">
+                                                        {formatCurrency(balance)}
                                                     </span>
-                                                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/20">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Cartões Ativos: 2</span>
-                                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Última Sinc: Há 5 min</span>
+                                                    <div className="flex justify-between items-center mt-3 lg:mt-4 pt-3 lg:pt-4 border-t border-white/20">
+                                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Cartões Ativos: 2</span>
+                                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Sincronizado</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -672,27 +724,27 @@ const App: React.FC = () => {
 
                                         {/* DISTRIBUTION LIST - Matching Screenshot 2 style */}
                                         <div className="flex flex-col gap-4">
-                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 pl-4">Distribuição de Sobras (Planejamento)</h3>
-                                            <div className="flex flex-col gap-3">
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 pl-4">Distribuição de Sobras (Planejamento)</h3>
+                                            <div className="flex flex-col gap-4">
                                                 {monthData.expenses.filter(e => e.isDistribution).map(alloc => (
-                                                    <div key={alloc.id} className="bg-orange-50/50 border border-orange-100/50 rounded-3xl p-5 flex items-center justify-between group hover:bg-orange-50 transition-all">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-orange-600">
-                                                                <div className="w-5 h-5 rounded-full border-2 border-slate-200"></div>
+                                                    <div key={alloc.id} className="bg-orange-50/50 border border-orange-100/50 rounded-3xl p-6 flex items-center justify-between group hover:bg-orange-50 transition-all">
+                                                        <div className="flex items-center gap-5">
+                                                            <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-orange-600">
+                                                                <div className="w-6 h-6 rounded-full border-2 border-slate-200"></div>
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-black text-slate-800 uppercase tracking-tight">{alloc.description}</span>
+                                                                <span className="text-base font-black text-slate-800 uppercase tracking-tight">{alloc.description}</span>
                                                                 <div className="flex items-center gap-1.5">
-                                                                    <ShoppingCart size={12} className="text-orange-500" />
-                                                                    <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">{alloc.category}</span>
+                                                                    <ShoppingCart size={14} className="text-orange-500" />
+                                                                    <span className="text-xs font-black text-orange-600 uppercase tracking-widest">{alloc.category}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div className="flex flex-col items-end">
-                                                            <span className="text-lg font-black text-slate-900 tracking-tight">
-                                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(alloc.amount)}
+                                                            <span className="text-2xl font-black text-slate-900 tracking-tight">
+                                                                {formatCurrency(alloc.amount)}
                                                             </span>
-                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">vence dia 15</span>
+                                                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">vence dia 05</span>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -766,7 +818,7 @@ const App: React.FC = () => {
                                 {monthData.goals.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                                         <Target size={48} className="mb-4 opacity-20" />
-                                        <span className="font-extrabold text-sm">Sem metas este mês.</span>
+                                        <span className="font-black text-sm">Sem metas este mês.</span>
                                         {currentYear === 2026 && currentMonth < 3 && <span className="text-xs font-bold opacity-60 mt-2 bg-slate-100 px-3 py-1 rounded-full">Disponível a partir de Março/2026</span>}
                                     </div>
                                 ) : (
@@ -797,22 +849,22 @@ const App: React.FC = () => {
                                                                 <Icon size={22} strokeWidth={3} />
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="font-extrabold text-slate-800 text-sm">{goal.name}</span>
-                                                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{isPaid ? 'Alocado' : 'Pendente'}</span>
+                                                                <span className="font-black text-slate-800 text-base">{goal.name}</span>
+                                                                <span className="text-sm font-black uppercase tracking-wider text-slate-400">{isPaid ? 'Alocado' : 'Pendente'}</span>
                                                             </div>
                                                         </div>
                                                         <div className={`px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-100`}>
-                                                            <span className="text-xs font-black text-slate-700">{sharePercentage}%</span>
+                                                            <span className="text-sm font-black text-slate-700">{sharePercentage}%</span>
                                                         </div>
                                                     </div>
                                                     
                                                     <div className="flex flex-col gap-2">
                                                         <div className="flex justify-between items-end">
-                                                            <span className={`text-2xl font-black ${isPaid ? s.text : 'text-slate-300'}`}>
-                                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentAmount)}
+                                                            <span className={`text-3xl font-black ${isPaid ? s.text : 'text-slate-300'}`}>
+                                                                {formatCurrency(currentAmount)}
                                                             </span>
-                                                            <span className="text-xs font-extrabold text-slate-400">
-                                                                Meta: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal.amount)}
+                                                            <span className="text-sm font-black text-slate-400">
+                                                                Meta: {formatCurrency(goal.amount)}
                                                             </span>
                                                         </div>
                                                         <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
