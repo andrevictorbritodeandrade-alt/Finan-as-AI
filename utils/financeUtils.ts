@@ -51,13 +51,16 @@ export const generateMonthData = (year: number, month: number): MonthData => {
     const isJan2026 = (year === 2026 && month === 1);
     const isFeb2026 = (year === 2026 && month === 2);
     const isMar2026 = (year === 2026 && month === 3);
+    const isApr2026 = (year === 2026 && month === 4);
+    const isMay2026 = (year === 2026 && month === 5);
+    const isApr2026OrMay2026 = isApr2026 || isMay2026;
 
     // Base Incomes
     const newIncomes: Transaction[] = [
-        { id: `inc_m_${year}_${month}`, description: `SALARIO MARCELLY`, amount: 3436.22, paid: isJan2026, date: salaryDate, category: 'Salário' },
-        { id: `inc_a_${year}_${month}`, description: `SALARIO ANDRE`, amount: 3436.22, paid: isJan2026, date: salaryDate, category: 'Salário' },
-        { id: `inc_mum_m_${year}_${month}`, description: 'MUMBUCA MARCELLY', amount: 598.00, paid: isJan2026, date: mumbucaDate, category: 'Mumbuca' },
-        { id: `inc_mum_a_${year}_${month}`, description: 'MUMBUCA ANDRE', amount: 598.00, paid: isJan2026, date: mumbucaDate, category: 'Mumbuca' }
+        { id: `inc_m_${year}_${month}`, description: `SALARIO MARCELLY`, amount: 3436.22, paid: isJan2026 || isApr2026OrMay2026, date: salaryDate, category: 'Salário' },
+        { id: `inc_a_${year}_${month}`, description: `SALARIO ANDRE`, amount: 3436.22, paid: isJan2026 || isApr2026OrMay2026, date: salaryDate, category: 'Salário' },
+        { id: `inc_mum_m_${year}_${month}`, description: 'MUMBUCA MARCELLY', amount: 598.00, paid: isJan2026 || isApr2026, date: mumbucaDate, category: 'Mumbuca' },
+        { id: `inc_mum_a_${year}_${month}`, description: 'MUMBUCA ANDRE', amount: 598.00, paid: isJan2026 || isApr2026, date: mumbucaDate, category: 'Mumbuca' }
     ];
 
     // --- 13º SALÁRIO LOGIC ---

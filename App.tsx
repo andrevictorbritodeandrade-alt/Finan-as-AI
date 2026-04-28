@@ -50,15 +50,13 @@ const App: React.FC = () => {
         localStorage.setItem(`checkin_${currentYear}_${currentMonth}`, JSON.stringify(newState));
     };
 
-    // Force refresh to pull updated categories and grouping (v7)
+    // Force refresh to pull updated categories and grouping (v11)
     useEffect(() => {
-        const forceUpdateV7 = localStorage.getItem('force_update_v7_formatting');
-        if (!forceUpdateV7) {
-            localStorage.removeItem('financeData_2026_3');
+        const forceUpdateV11 = localStorage.getItem('force_update_v11_salary_mumbuca_fixed');
+        if (!forceUpdateV11) {
             localStorage.removeItem('financeData_2026_4');
             localStorage.removeItem('financeData_2026_5');
-            localStorage.removeItem('financeData_2026_6');
-            localStorage.setItem('force_update_v7_formatting', 'true');
+            localStorage.setItem('force_update_v11_salary_mumbuca_fixed', 'true');
             window.location.reload();
         }
     }, []);
@@ -280,6 +278,26 @@ const App: React.FC = () => {
                         }
                     }
 
+                    // 4. Force Mumbuca as PAID in April 2026
+                    if (year === 2026 && month === 4) {
+                        data.incomes = data.incomes.map(i => {
+                            if (i.description.toUpperCase().includes("MUMBUCA")) {
+                                return { ...i, paid: true };
+                            }
+                            return i;
+                        });
+                    }
+
+                    // 4. Force Mumbuca as PAID in April 2026
+                    if (year === 2026 && month === 4) {
+                        data.incomes = data.incomes.map(i => {
+                            if (i.description.toUpperCase().includes("MUMBUCA")) {
+                                return { ...i, paid: true };
+                            }
+                            return i;
+                        });
+                    }
+
                     return data;
                 };
 
@@ -449,7 +467,7 @@ const App: React.FC = () => {
         };
     }, [monthData, currentYear, currentMonth]);
 
-    const balance = stats.combined.total - stats.realExpenses.paid;
+    const balance = (stats.combined.paid) - stats.realExpenses.paid;
 
     // Group Debts by Person
     const groupedDebts = useMemo(() => {
