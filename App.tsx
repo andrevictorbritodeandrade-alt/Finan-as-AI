@@ -27,6 +27,7 @@ const App: React.FC = () => {
     const [syncStatus, setSyncStatus] = useState<'offline' | 'syncing' | 'online'>('offline');
     const [transactionListType, setTransactionListType] = useState<TransactionType>('expenses');
     const [activeTab, setActiveTab] = useState<'overview' | 'transactions'>('overview');
+    const [filter, setFilter] = useState<{ type: 'group' | 'none', value: string }>({ type: 'none', value: '' });
 
     const [showSecurityMessage, setShowSecurityMessage] = useState(false);
 
@@ -50,13 +51,13 @@ const App: React.FC = () => {
         localStorage.setItem(`checkin_${currentYear}_${currentMonth}`, JSON.stringify(newState));
     };
 
-    // Force refresh to pull updated categories and grouping (v13)
+    // Force refresh to pull updated categories and grouping (v15)
     useEffect(() => {
-        const forceUpdateV13 = localStorage.getItem('force_update_v13_due_dates_marcia_brito_fixed');
-        if (!forceUpdateV13) {
+        const forceUpdateV15 = localStorage.getItem('force_update_v15_salary_due_dates_fixed');
+        if (!forceUpdateV15) {
             localStorage.removeItem('financeData_2026_4');
             localStorage.removeItem('financeData_2026_5');
-            localStorage.setItem('force_update_v13_due_dates_marcia_brito_fixed', 'true');
+            localStorage.setItem('force_update_v15_salary_due_dates_fixed', 'true');
             window.location.reload();
         }
     }, []);
@@ -288,16 +289,6 @@ const App: React.FC = () => {
                         });
                     }
 
-                    // 4. Force Mumbuca as PAID in April 2026
-                    if (year === 2026 && month === 4) {
-                        data.incomes = data.incomes.map(i => {
-                            if (i.description.toUpperCase().includes("MUMBUCA")) {
-                                return { ...i, paid: true };
-                            }
-                            return i;
-                        });
-                    }
-
                     return data;
                 };
 
@@ -428,6 +419,23 @@ const App: React.FC = () => {
         handleEditTransaction(newT);
     };
 
+    const filteredTransactions = useMemo(() => {
+        if (!monthData) return [];
+        let list = monthData[transactionListType];
+        if (filter.type === 'group') {
+            list = list.filter(t => t.group === filter.value);
+        } else if (filter.type === 'category') {
+            list = list.filter(t => t.category === filter.value);
+        }
+        return list;
+    }, [monthData, transactionListType, filter]);
+
+    const handleFilter = (type: 'group' | 'category' | 'none', value: string) => {
+        setFilter({ type, value });
+        setView('transactions');
+        setTransactionListType('expenses');
+    };
+
     // Stats Calculation
     const stats = useMemo(() => {
         if (!monthData) return { 
@@ -454,8 +462,8 @@ const App: React.FC = () => {
             ...monthData.avulsosItems.filter(e => !isActuallySuspended(e))
         ];
 
-        const sum = (arr: Transaction[]) => arr.reduce((acc, t) => acc + t.amount, 0);
-        const sumPaid = (arr: Transaction[]) => arr.filter(t => t.paid).reduce((acc, t) => acc + t.amount, 0);
+        const sum = (arr: Transaction[]) => arr.reduce((acc, t) => acc + Number(t.amount || 0), 0);
+        const sumPaid = (arr: Transaction[]) => arr.filter(t => t.paid).reduce((acc, t) => acc + Number(t.amount || 0), 0);
 
         const surplusRaw = sum(combined) - sum(realExpenses);
 
@@ -712,7 +720,7 @@ const App: React.FC = () => {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                                 {groupedDebts.map(group => (
-                                                    <div key={group.name} className="bg-white rounded-3xl p-6 border border-slate-50 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
+                                                    <button key={group.name} onClick={() => handleFilter('group', group.name)} className="bg-white rounded-3xl p-6 border border-slate-50 shadow-sm flex items-center justify-between group hover:shadow-md transition-all w-full text-left">
                                                         <div className="flex items-center gap-4">
                                                             <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getDebtColor(group.name)} text-white flex items-center justify-center shrink-0 shadow-lg shadow-slate-200/50`}>
                                                                 <User size={24} strokeWidth={2.5} />
@@ -727,7 +735,7 @@ const App: React.FC = () => {
                                                         <div className="p-3 bg-slate-50 rounded-xl text-slate-300 group-hover:text-rose-500 transition-colors">
                                                             <ArrowRight size={20} />
                                                         </div>
-                                                    </div>
+                                                    </button>
                                                 ))}
                                                 {groupedDebts.length === 0 && (
                                                     <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 gap-4">
@@ -774,7 +782,7 @@ const App: React.FC = () => {
                                                     const Icon = s.icon;
 
                                                     return (
-                                                        <div key={cat} className="bg-white rounded-3xl p-4 border border-slate-50 shadow-sm flex items-center gap-2 group hover:shadow-md transition-all overflow-hidden">
+                                                        <button key={cat} onClick={() => handleFilter('category', cat)} className="bg-white rounded-3xl p-4 border border-slate-50 shadow-sm flex items-center gap-2 group hover:shadow-md transition-all overflow-hidden w-full text-left">
                                                             <div className={`w-12 h-12 rounded-2xl ${s.bg} ${s.text} flex items-center justify-center shrink-0`}>
                                                                 <Icon size={24} strokeWidth={2.5} />
                                                             </div>
@@ -794,7 +802,7 @@ const App: React.FC = () => {
                                                                 </svg>
                                                                 <span className="absolute text-xs font-black text-slate-600">{percent}%</span>
                                                             </div>
-                                                        </div>
+                                                        </button>
                                                     );
                                                 })}
                                             </div>
@@ -924,7 +932,7 @@ const App: React.FC = () => {
                                 </div>
                                 
                                 <TransactionList 
-                                    transactions={monthData[transactionListType]}
+                                    transactions={filteredTransactions}
                                     onTogglePaid={(id, paid) => handleTogglePaid(id, paid, transactionListType)}
                                     onEdit={handleEditTransaction}
                                     onUpdate={(updated) => handleSaveTransaction(updated, transactionListType)}
