@@ -6,6 +6,8 @@ interface HeaderProps {
     month: number;
     year: number;
     balance: number;
+    bankReserves: { santander: number; inter: number; sofisa: number };
+    setBankReserves: (reserves: { santander: number; inter: number; sofisa: number }) => void;
     checkInDate: string | null;
     onMonthChange: (diff: number) => void;
     onSync: () => void;
@@ -13,9 +15,9 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ 
-    month, year, balance, checkInDate, onMonthChange, onSync, syncStatus 
+    month, year, balance, checkInDate, onMonthChange, onSync, syncStatus, bankReserves, setBankReserves
 }) => {
-    const [showBalance, setShowBalance] = useState(true);
+    const [showBalance] = useState(true);
 
     const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     
@@ -41,12 +43,12 @@ const Header: React.FC<HeaderProps> = ({
         : 'bg-gradient-to-r from-rose-700 to-pink-600';
 
     return (
-        <header className="sticky top-0 z-40 bg-[#f0fdf4]/95 backdrop-blur-xl border-b border-emerald-100/50 pb-4 pt-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-b-[2rem]">
+        <header className="sticky top-0 z-40 bg-gradient-to-b from-teal-600 via-teal-500/30 to-[#f0fdf4] backdrop-blur-lg pb-6 pt-4 rounded-b-[2.5rem] border-b border-white/20">
             {/* Greeting & Action Buttons Row */}
             <div className="flex justify-between items-center px-6 mb-4">
                 <div className="flex flex-col">
-                    <span className="text-sm font-black text-slate-800 tracking-tight capitalize">{greeting}, Família!</span>
-                    <span className="text-sm font-black text-slate-400 uppercase tracking-wider">{formattedDate}</span>
+                    <span className="text-[10px] font-black text-white/90 uppercase tracking-[0.2em]">{greeting}, Família!</span>
+                    <span className="text-[10px] font-black text-teal-50/60 uppercase tracking-tighter">{formattedDate}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <button 
@@ -56,55 +58,87 @@ const Header: React.FC<HeaderProps> = ({
                                 window.location.reload();
                             }
                         }}
-                        className="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all font-black"
+                        className="p-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all font-black border border-white/10"
                         title="Resetar Mês"
                     >
-                        <RefreshCw size={20} strokeWidth={4} />
+                        <RefreshCw size={16} strokeWidth={4} />
                     </button>
                     <button 
                         onClick={onSync}
-                        className={`p-2 rounded-xl transition-all ${
-                            syncStatus === 'online' ? 'bg-emerald-50 text-emerald-600' :
-                            syncStatus === 'syncing' ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-500'
+                        className={`p-1.5 rounded-lg transition-all border border-white/10 shadow-lg ${
+                            syncStatus === 'online' ? 'bg-emerald-400 text-white' :
+                            syncStatus === 'syncing' ? 'bg-blue-400 text-white' : 'bg-white/10 text-white'
                         }`}
                     >
-                        <RefreshCw size={20} strokeWidth={4} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
+                        <RefreshCw size={16} strokeWidth={4} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
                     </button>
                 </div>
             </div>
 
             {/* Month Selector Row */}
             <div className="flex justify-center items-center px-5 mb-4">
-                <div className="flex items-center gap-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50 backdrop-blur-sm">
-                    <button onClick={() => onMonthChange(-1)} className="p-2 rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 shadow-sm transition-all">
-                        <ChevronLeft size={20} strokeWidth={4} />
+                <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md shadow-inner">
+                    <button onClick={() => onMonthChange(-1)} className="p-1.5 rounded-lg hover:bg-white/10 text-white transition-all">
+                        <ChevronLeft size={16} strokeWidth={4} />
                     </button>
-                    <span className="text-sm font-black w-32 text-center text-slate-800 uppercase tracking-widest">
-                        {monthNames[month - 1].slice(0, 3)} <span className="text-slate-400">{year}</span>
+                    <span className="text-lg font-black w-24 text-center text-white uppercase tracking-widest">
+                        {monthNames[month - 1].slice(0, 3)} <span className="opacity-40">{year}</span>
                     </span>
-                    <button onClick={() => onMonthChange(1)} className="p-2 rounded-xl hover:bg-white text-slate-500 hover:text-slate-900 shadow-sm transition-all">
-                        <ChevronRight size={20} strokeWidth={4} />
+                    <button onClick={() => onMonthChange(1)} className="p-1.5 rounded-lg hover:bg-white/10 text-white transition-all">
+                        <ChevronRight size={16} strokeWidth={4} />
                     </button>
                 </div>
             </div>
 
-            {/* Hero: Balance */}
-            <div className="flex flex-col items-center justify-center mt-2 px-6">
-                <div className="flex items-center gap-2 mb-1">
-                     <span className="text-xs font-black uppercase tracking-wider text-slate-500">Saldo Disponível</span>
+            {/* Hero: Banks Reserves */}
+            <div className="flex flex-col items-center justify-center mt-1 px-6">
+                <div className="flex items-center gap-2 mb-0.5">
                      {checkInDate && (
-                         <span className="text-sm font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase">
-                            Cheque: {new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(checkInDate))}
+                         <span className="text-[10px] font-black text-emerald-900 bg-emerald-400 px-2 py-0.5 rounded-full shadow-sm uppercase">
+                            VALE: {new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(checkInDate))}
                          </span>
                     )}
-                     <button onClick={() => setShowBalance(!showBalance)} className="text-slate-400 hover:text-slate-600 transition-colors p-1">
-                        {showBalance ? <EyeOff size={16} strokeWidth={4} /> : <Eye size={16} strokeWidth={4} />}
-                    </button>
                 </div>
-                
-                <span className={`text-4xl sm:text-5xl font-black tracking-tight text-transparent bg-clip-text ${balanceGradient} drop-shadow-sm transition-all duration-500 ${!showBalance && 'blur-xl select-none opacity-50'}`}>
-                    {formatCurrency(balance)}
-                </span>
+                {/* Bank Reserves */}
+                <div className="grid grid-cols-3 gap-2 w-full mt-2">
+                     <div className="bg-red-600 rounded-xl p-2 text-white shadow-md text-center">
+                         <div className="text-[10px] font-black uppercase text-white/80">Santander</div>
+                         <div className="flex justify-center items-center">
+                            <span className="text-sm font-black text-white/90">R$</span>
+                             <input 
+                                type="number" 
+                                value={bankReserves.santander} 
+                                onChange={(e) => setBankReserves({...bankReserves, santander: parseFloat(e.target.value) || 0})}
+                                className="bg-transparent text-xl font-black w-full text-center outline-none"
+                            />
+                         </div>
+                     </div>
+                     <div className="bg-orange-500 rounded-xl p-2 text-white shadow-md text-center">
+                         <div className="text-[10px] font-black uppercase text-white/80">Inter</div>
+                         <div className="flex justify-center items-center">
+                            <span className="text-sm font-black text-white/90">R$</span>
+                             <input 
+                                type="number" 
+                                value={bankReserves.inter} 
+                                onChange={(e) => setBankReserves({...bankReserves, inter: parseFloat(e.target.value) || 0})}
+                                className="bg-transparent text-xl font-black w-full text-center outline-none"
+                            />
+                         </div>
+                     </div>
+                     <div className="bg-emerald-600 rounded-xl p-2 text-white shadow-md text-center">
+                         <div className="text-[10px] font-black uppercase text-white/80">Sofisa</div>
+                         <div className="flex justify-center items-center">
+                            <span className="text-sm font-black text-white/90">R$</span>
+                             <input 
+                                type="number" 
+                                value={bankReserves.sofisa} 
+                                onChange={(e) => setBankReserves({...bankReserves, sofisa: parseFloat(e.target.value) || 0})}
+                                className="bg-transparent text-xl font-black w-full text-center outline-none"
+                            />
+                         </div>
+                     </div>
+                 </div>
+
             </div>
         </header>
     );
